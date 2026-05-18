@@ -5,10 +5,10 @@ dotenv.config();
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_APT_SECRET
+    api_secret: process.env.CLOUDINARY_API_SECRET
 })
 
-const UploadImage = async (filetoupload) => {
+const UploadFile = async (filetoupload) => {
     try {
         const data = await cloudinary.uploader.upload(filetoupload, { resource_type: 'auto' });
         return data;
@@ -54,7 +54,7 @@ const RemoveVideo = async (publicId) => {
 
 // }
 module.exports = {
-    UploadImage,
+    UploadFile,
     RemoveImage,
     RemovePDF,
     RemoveVideo

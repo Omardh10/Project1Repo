@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
 const { validatregister, validatlogin, validatupdateuser, User } = require("../models/User");
-const { UploadImage, RemoveImage } = require("../utils/cloudinary");
+const { RemoveImage, UploadFile } = require("../utils/cloudinary");
 
 const RegisterUser = asynchandler(async (req, res) => {
 
@@ -82,7 +82,7 @@ const PostImageUser = asynchandler(async (req, res) => {
     }
     //get the path:
     const pathimg = await path.join(__dirname, `../images/${req.file.filename}`)
-    const result = await UploadImage(pathimg);
+    const result = await UploadFile(pathimg);
     const user = await User.findById(req.user.id);
     if (user.profilephoto.publicId !== null) {
         await RemoveImage(user.profilephoto.publicId);
