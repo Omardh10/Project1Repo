@@ -37,4 +37,30 @@ const TransactionSchema = new mongoose.Schema({
 
 const Transaction = mongoose.model('Transaction', TransactionSchema);
 
-module.exports = Transaction;   
+const validatecreatetransaction = (obj) => {
+    const schema = joi.object({
+        student_id: joi.string().required(),
+        course_id: joi.string().required(),
+        amount: joi.number().required().min(0),
+        platform_fee: joi.number().required(),
+        instructor_earnings: joi.number().required()
+    })
+    return schema.validate(obj)
+}
+
+const validatupdatetransaction = (obj) => {
+    const schema = joi.object({
+        student_id: joi.string(),
+        course_id: joi.string(),
+        amount: joi.number().min(0),
+        platform_fee: joi.number(),
+        instructor_earnings: joi.number()
+    })
+    return schema.validate(obj)
+}
+
+module.exports = {
+    Transaction,
+    validatecreatetransaction,
+    validatupdatetransaction
+};

@@ -63,10 +63,61 @@ const CourseSchema = new mongoose.Schema({
     },
     approval_date: {
         type: Date,
-        required: true
+        default: Date.now
     }
 }, { timestamps: true });
 
 
 const Course = mongoose.model('Course', CourseSchema);
-module.exports = Course;
+
+const validatecreatecourse = (obj) => {
+    const schema = joi.object({
+        teacher_id: joi.string().required(),
+        title: joi.string().required(),
+        description: joi.string().required(),
+        category: joi.string().required(),
+        price: joi.number().required(),
+        lessons: joi.array().items(joi.object({
+            title: joi.string().required(),
+            contentType: joi.string().valid('video', 'pdf').required(),
+            pdf_content: joi.object({
+                url: joi.string().default(""),
+                publicId: joi.string().default(null)
+            }),
+            video_content: joi.object({
+                url: joi.string().default(""),
+                publicId: joi.string().default(null)
+            })
+        }))
+    })
+    return schema.validate(obj)
+}
+
+const validatupdatecourse = (obj) => {
+    const schema = joi.object({
+        teacher_id: joi.string(),
+        title: joi.string(),
+        description: joi.string(),
+        category: joi.string(),
+        price: joi.number(),
+        lessons: joi.array().items(joi.object({
+            title: joi.string(),
+            contentType: joi.string().valid('video', 'pdf'),
+            pdf_content: joi.object({
+                url: joi.string().default(""),
+                publicId: joi.string().default(null)
+            }),
+            video_content: joi.object({
+                url: joi.string().default(""),
+                publicId: joi.string().default(null)
+            })
+        }))
+    })
+    return schema.validate(obj)
+}
+
+module.exports = {
+    Course,
+    validatecreatecourse,
+    validatupdatecourse
+};

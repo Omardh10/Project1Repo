@@ -25,4 +25,28 @@ const ReviewSchema = new mongoose.Schema({
 
 const Review = mongoose.model('Review', ReviewSchema);
 
-module.exports = Review;
+const validatecreatereview = (obj) => {
+    const schema = joi.object({
+        student_id: joi.string().required(),
+        course_id: joi.string().required(),
+        rating: joi.number().required().min(1).max(5),
+        comment: joi.string().max(150)
+    })
+    return schema.validate(obj)
+}
+
+const validatupdatereview = (obj) => {
+    const schema = joi.object({
+        student_id: joi.string(),
+        course_id: joi.string(),
+        rating: joi.number().min(1).max(5),
+        comment: joi.string().max(150)
+    })
+    return schema.validate(obj)
+}
+
+module.exports = {
+    Review,
+    validatecreatereview,
+    validatupdatereview
+};

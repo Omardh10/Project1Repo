@@ -19,7 +19,28 @@ const reportSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-
-
 const Report = mongoose.model('Report', reportSchema);
-module.exports = Report;
+
+const validatecreatereport = (obj) => {
+    const schema = joi.object({
+        student_id: joi.string().required(),
+        parent_id: joi.string().required(),
+        report_data: joi.string().required()
+    })
+    return schema.validate(obj)
+}
+
+const validatupdatereport = (obj) => {
+    const schema = joi.object({
+        student_id: joi.string(),
+        parent_id: joi.string(),
+        report_data: joi.string()
+    })
+    return schema.validate(obj)
+}
+
+module.exports = {
+    Report,
+    validatecreatereport,
+    validatupdatereport
+};

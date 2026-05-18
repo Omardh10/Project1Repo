@@ -16,6 +16,27 @@ const NotificationSchema = new mongoose.Schema({
     }
 },{timestamps:true});
 const Notification = mongoose.model('Notification', NotificationSchema);
+
+const validatecreatenotification = (obj) => {
+    const schema = joi.object({
+        userId: joi.string().required(),
+        message: joi.string().required(),
+        isRead: joi.boolean().required()
+    })
+    return schema.validate(obj)
+}
+
+const validatupdatenotification = (obj) => {
+    const schema = joi.object({
+        userId: joi.string(),
+        message: joi.string(),
+        isRead: joi.boolean()
+    })
+    return schema.validate(obj)
+}
+
 module.exports = {
-    Notification
+    Notification,
+    validatecreatenotification,
+    validatupdatenotification
 };

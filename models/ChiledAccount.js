@@ -21,4 +21,27 @@ const ChiledAccountSchema = new mongoose.Schema({
 
 
 const ChiledAccount = mongoose.model('ChiledAccount', ChiledAccountSchema);
-module.exports = ChiledAccount;
+
+const validatecreatechildaccount = (obj) => {
+    const schema = joi.object({
+        student_id: joi.string().required(),
+        parent_id: joi.string().required(),
+        age_group: joi.string().required()
+    })
+    return schema.validate(obj)
+}
+
+const validatupdatechildaccount = (obj) => {
+    const schema = joi.object({
+        student_id: joi.string(),
+        parent_id: joi.string(),
+        age_group: joi.string()
+    })
+    return schema.validate(obj)
+}
+
+module.exports = {
+    ChiledAccount,
+    validatecreatechildaccount,
+    validatupdatechildaccount
+};

@@ -17,6 +17,26 @@ const QuestionSchema = new mongoose.Schema({
 
 const Question = mongoose.model('Question', QuestionSchema);
 
+const validatecreatequestion = (obj) => {
+    const schema = joi.object({
+        question_text: joi.string().required(),
+        options: joi.array().items(joi.string()).required(),
+        correct_answer: joi.string().required()
+    })
+    return schema.validate(obj)
+}
+
+const validatupdatequestion = (obj) => {
+    const schema = joi.object({
+        question_text: joi.string(),
+        options: joi.array().items(joi.string()),
+        correct_answer: joi.string()
+    })
+    return schema.validate(obj)
+}
+
 module.exports = {
-    Question
+    Question,
+    validatecreatequestion,
+    validatupdatequestion
 }

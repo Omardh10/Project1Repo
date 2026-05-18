@@ -12,6 +12,25 @@ const AdminSchema = new mongoose.Schema({
     }
 },{timestamps:true});
 const Admin = mongoose.model('Admin', AdminSchema);
+
+const validatecreateadmin = (obj) => {
+    const schema = joi.object({
+        userId: joi.string().required(),
+        platform_fee_precentage: joi.number().required()
+    })
+    return schema.validate(obj)
+}
+
+const validatupdateadmin = (obj) => {
+    const schema = joi.object({
+        userId: joi.string(),
+        platform_fee_precentage: joi.number()
+    })
+    return schema.validate(obj)
+}
+
 module.exports = {
-    Admin
+    Admin,
+    validatecreateadmin,
+    validatupdateadmin
 };

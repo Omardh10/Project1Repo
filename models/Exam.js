@@ -17,6 +17,27 @@ const ExamSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const Exam = mongoose.model('Exam', ExamSchema);
+
+const validatecreateexam = (obj) => {
+    const schema = joi.object({
+        course_id: joi.string().required(),
+        title: joi.string().required(),
+        passing_score: joi.number().required()
+    })
+    return schema.validate(obj)
+}
+
+const validatupdateexam = (obj) => {
+    const schema = joi.object({
+        course_id: joi.string(),
+        title: joi.string(),
+        passing_score: joi.number()
+    })
+    return schema.validate(obj)
+}
+
 module.exports = {
-    Exam
+    Exam,
+    validatecreateexam,
+    validatupdateexam
 }

@@ -15,7 +15,7 @@ const EnrollmentSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-    complation_status: {
+    completion_status: {
         type: String,
         enum: ['not started', 'in progress', 'completed'],
         default: 'not started'
@@ -27,6 +27,31 @@ const EnrollmentSchema = new mongoose.Schema({
 }, { timestamps: true });   
 
 const Enrollment = mongoose.model('Enrollment', EnrollmentSchema);
-module.exports = {
-    Enrollment
+
+const validatecreateenrollment = (obj) => {
+    const schema = joi.object({
+        student_id: joi.string().required(),
+        course_id: joi.string().required(),
+        progress: joi.number().default(0),
+        completion_status: joi.string().valid('not started', 'in progress', 'completed').default('not started'),
+        certificate_issued: joi.boolean().default(false)
+    })
+    return schema.validate(obj)
 }
+
+const validatupdateenrollment = (obj) => {
+    const schema = joi.object({
+        student_id: joi.string(),
+        course_id: joi.string(),
+        progress: joi.number().default(0),
+        completion_status: joi.string().valid('not started', 'in progress', 'completed').default('not started'),
+        certificate_issued: joi.boolean().default(false)
+    })
+    return schema.validate(obj)
+}
+
+module.exports = {
+    Enrollment,
+    validatecreateenrollment,
+    validatupdateenrollment
+};

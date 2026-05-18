@@ -14,4 +14,24 @@ const CourseViewLogSchema = new mongoose.Schema({
 
 const CourseViewLog = mongoose.model('CourseViewLog', CourseViewLogSchema);
 
-module.exports = CourseViewLog;
+const validatecreatecourseviewlog = (obj) => {
+    const schema = joi.object({
+        course_id: joi.string().required(),
+        viewed_at: joi.date().default(Date.now)
+    })
+    return schema.validate(obj)
+}
+
+const validatupdatecourseviewlog = (obj) => {
+    const schema = joi.object({
+        course_id: joi.string(),
+        viewed_at: joi.date().default(Date.now)
+    })
+    return schema.validate(obj)
+}
+
+module.exports = {
+    CourseViewLog,
+    validatecreatecourseviewlog,
+    validatupdatecourseviewlog
+};

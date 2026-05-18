@@ -16,6 +16,27 @@ const TeacherSchema = new mongoose.Schema({
         }
 },{timestamps:true});
 const Teacher = mongoose.model('Teacher', TeacherSchema);
+
+const validatecreateteacher = (obj) => {
+    const schema = joi.object({
+        userId: joi.string().required(),
+        total_students: joi.number().required(),
+        total_courses: joi.number().required()
+    })
+    return schema.validate(obj)
+}
+
+const validatupdateteacher = (obj) => {
+    const schema = joi.object({
+        userId: joi.string(),
+        total_students: joi.number(),
+        total_courses: joi.number()
+    })
+    return schema.validate(obj)
+}
+
 module.exports = {
-    Teacher
+    Teacher,
+    validatecreateteacher,
+    validatupdateteacher
 };

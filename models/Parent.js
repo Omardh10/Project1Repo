@@ -8,6 +8,23 @@ const ParentSchema = new mongoose.Schema({
         }
 },{timestamps:true});
 const Parent = mongoose.model('Parent', ParentSchema);
+
+const validatecreateparent = (obj) => {
+    const schema = joi.object({
+        userId: joi.string().required()
+    })
+    return schema.validate(obj)
+}
+
+const validatupdateparent = (obj) => {
+    const schema = joi.object({
+        userId: joi.string()
+    })
+    return schema.validate(obj)
+}
+
 module.exports = {
-    Parent
+    Parent,
+    validatecreateparent,
+    validatupdateparent
 };
