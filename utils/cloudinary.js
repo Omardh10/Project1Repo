@@ -15,8 +15,8 @@ const UploadImage = async (filetoupload) => {
     } catch (error) {
         return error;
     }
-
 }
+
 const RemoveImage = async (imagepublicid) => {
     try {
         const result = await cloudinary.uploader.destroy(imagepublicid);
@@ -25,6 +25,24 @@ const RemoveImage = async (imagepublicid) => {
         return error;
     }
 
+}
+
+const RemovePDF = async (publicId) => {
+    try {
+        const result = await cloudinary.uploader.destroy(publicId, { resource_type: 'raw' });
+        return result;
+    } catch (error) {
+        return error;
+    }
+}
+
+const RemoveVideo = async (publicId) => {
+    try {
+        const result = await cloudinary.uploader.destroy(publicId, { resource_type: 'video' });
+        return result;
+    } catch (error) {
+        return error;
+    }
 }
 // const RemoveImagemany = async (imagepublicides) => {
 //     try {
@@ -37,6 +55,8 @@ const RemoveImage = async (imagepublicid) => {
 // }
 module.exports = {
     UploadImage,
-    RemoveImage
+    RemoveImage,
+    RemovePDF,
+    RemoveVideo
 }
 

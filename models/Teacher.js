@@ -1,20 +1,25 @@
 const mongoose = require('mongoose');
 const joi = require('joi');
 const TeacherSchema = new mongoose.Schema({
-      userId:{
-            type:mongoose.Schema.Types.ObjectId,
-            ref:'User',
-            required:true
-        },
-        total_students:{
-            type:Number,
-            required:true
-        },
-        total_courses:{
-            type:Number,
-            required:true
-        }
-},{timestamps:true});
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    total_students: {
+        type: Number,
+        required: true
+    },
+    total_courses: {
+        type: Number,
+        required: true
+    },
+    stetus: {
+        type: String,
+        enum: ['accepted', 'pending', 'rejected'],
+        default: 'pending'
+    }
+}, { timestamps: true });
 const Teacher = mongoose.model('Teacher', TeacherSchema);
 
 const validatecreateteacher = (obj) => {
