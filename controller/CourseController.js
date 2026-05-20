@@ -126,5 +126,10 @@ const DeleteCourse = asynchandler(async (req, res) => {
 
 
 module.exports = {
-
+    CreateCourse,
+    PostCourseFiles,
+    GetCourse,
+    UpdateCourse,
+    GetCourses,
+    DeleteCourse
 }

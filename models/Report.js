@@ -1,17 +1,23 @@
 const mongoose = require('mongoose');
 const joi = require('joi');
 const reportSchema = new mongoose.Schema({
-  
-    student_id: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'Student', 
-        required: true 
+
+    student_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Student',
+        nullable: true
     },
 
-    parent_id: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'Parent', 
-        required: true 
+    parent_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Parent',
+        nullable: true
+    },
+
+    course_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Course',
+        required: true
     },
     report_data: {
         type: String,
@@ -23,8 +29,8 @@ const Report = mongoose.model('Report', reportSchema);
 
 const validatecreatereport = (obj) => {
     const schema = joi.object({
-        student_id: joi.string().required(),
-        parent_id: joi.string().required(),
+
+        course_id: joi.string().required(),
         report_data: joi.string().required()
     })
     return schema.validate(obj)
@@ -34,7 +40,8 @@ const validatupdatereport = (obj) => {
     const schema = joi.object({
         student_id: joi.string(),
         parent_id: joi.string(),
-        report_data: joi.string()
+        report_data: joi.string(),
+        course_id: joi.string()
     })
     return schema.validate(obj)
 }
