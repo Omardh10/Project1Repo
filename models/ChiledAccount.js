@@ -31,7 +31,7 @@ const validatecreatechildaccount = (obj) => {
     return schema.validate(obj)
 }
 
-const validatupdatechildaccount = (obj) => {
+const validateupdatechildaccount = (obj) => {
     const schema = joi.object({
         student_id: joi.string(),
         parent_id: joi.string(),
@@ -43,5 +43,5 @@ const validatupdatechildaccount = (obj) => {
 module.exports = {
     ChiledAccount,
     validatecreatechildaccount,
-    validatupdatechildaccount
+    validateupdatechildaccount
 };

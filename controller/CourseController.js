@@ -100,7 +100,7 @@ const UpdateCourse = asynchandler(async (req, res) => {
             price
         }
     }, { new: true })
-    return res.status(202).json({ status: "success", user: updateuser })
+    return res.status(202).json({ status: "success", course: course })
 
 })
 
