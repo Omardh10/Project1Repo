@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
+const { validatecreateparent, validateupdateparent } = require("../models/Parent");
 
 
 const CreateParent = asynchandler(async (req, res) => {
@@ -35,7 +36,7 @@ const UpdateParent = asynchandler(async (req, res) => {
     if (!parent) {
         return res.status(404).json({ message: "Parent not found" });
     }
-    const { error } = validatupdateparent(req.body);
+    const { error } = validateupdateparent(req.body);
     if (error) {
         return res.status(403).json({ message: error.details[0].message })
     }

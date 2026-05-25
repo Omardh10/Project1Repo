@@ -22,7 +22,7 @@ const validatecreatecourseviewlog = (obj) => {
     return schema.validate(obj)
 }
 
-const validatupdatecourseviewlog = (obj) => {
+const validateupdatecourseviewlog = (obj) => {
     const schema = joi.object({
         course_id: joi.string(),
         viewed_at: joi.date().default(Date.now)
@@ -33,5 +33,5 @@ const validatupdatecourseviewlog = (obj) => {
 module.exports = {
     CourseViewLog,
     validatecreatecourseviewlog,
-    validatupdatecourseviewlog
+   validateupdatecourseviewlog
 };

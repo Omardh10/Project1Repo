@@ -26,7 +26,7 @@ const validatecreatestudent = (obj) => {
     return schema.validate(obj)
 }
 
-const validatupdatestudent = (obj) => {
+const validateupdatestudent = (obj) => {
     const schema = joi.object({
         userId: joi.string(),
         points_balance: joi.number(),
@@ -39,5 +39,5 @@ const validatupdatestudent = (obj) => {
 module.exports = {
     Student,
     validatecreatestudent,
-    validatupdatestudent
+    validateupdatestudent
 };

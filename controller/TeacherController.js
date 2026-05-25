@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
+const { validatecreateteacher, validateupdateteacher } = require("../models/Teacher");
 
 
 const CreateTeacher = asynchandler(async (req, res) => {
@@ -32,7 +33,7 @@ const GetTeacher = asynchandler(async (req, res) => {
 })
 
 const UpdateTeacher = asynchandler(async (req, res) => {
-    const { error } = validatupdateteacher(req.body);
+    const { error } = validateupdateteacher(req.body);
     if (error) {
         return res.status(403).json({ message: error.details[0].message })
     }

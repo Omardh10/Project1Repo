@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
+const { validatecreatecourseviewlog, validateupdatecourseviewlog } = require("../models/CourseViewLog");
 
 
 const CreateCourseViewLog = asynchandler(async (req, res) => {
@@ -28,7 +29,7 @@ const GetCourseViewLog = asynchandler(async (req, res) => {
 })
 
 const UpdateCourseViewLog = asynchandler(async (req, res) => {
-    const { error } = validatupdatecourseviewlog(req.body);
+    const { error } = validateupdatecourseviewlog(req.body);
     if (error) {
         return res.status(403).json({ message: error.details[0].message })
     }

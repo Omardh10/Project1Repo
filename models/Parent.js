@@ -16,7 +16,7 @@ const validatecreateparent = (obj) => {
     return schema.validate(obj)
 }
 
-const validatupdateparent = (obj) => {
+const validateupdateparent = (obj) => {
     const schema = joi.object({
         userId: joi.string()
     })
@@ -26,5 +26,5 @@ const validatupdateparent = (obj) => {
 module.exports = {
     Parent,
     validatecreateparent,
-    validatupdateparent
+    validateupdateparent
 };

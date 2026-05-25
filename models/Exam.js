@@ -27,7 +27,7 @@ const validatecreateexam = (obj) => {
     return schema.validate(obj)
 }
 
-const validatupdateexam = (obj) => {
+const validateupdateexam = (obj) => {
     const schema = joi.object({
         course_id: joi.string(),
         title: joi.string(),
@@ -39,5 +39,5 @@ const validatupdateexam = (obj) => {
 module.exports = {
     Exam,
     validatecreateexam,
-    validatupdateexam
+    validateupdateexam
 }

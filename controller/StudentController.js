@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
+const { validateupdatestudent, validatecreatestudent } = require("../models/Student");
 
 const CreateStudent = asynchandler(async (req, res) => {
 
@@ -36,7 +37,7 @@ const UpdateStudent = asynchandler(async (req, res) => {
         return res.status(404).json({ message: "Student not found" });
     }
 
-    const { error } = validatupdatestudent(req.body);
+    const { error } = validateupdatestudent(req.body);
     if (error) {
         return res.status(403).json({ message: error.details[0].message })
     }

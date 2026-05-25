@@ -36,7 +36,7 @@ const validatecreatereport = (obj) => {
     return schema.validate(obj)
 }
 
-const validatupdatereport = (obj) => {
+const validateupdatereport = (obj) => {
     const schema = joi.object({
         student_id: joi.string(),
         parent_id: joi.string(),
@@ -49,5 +49,5 @@ const validatupdatereport = (obj) => {
 module.exports = {
     Report,
     validatecreatereport,
-    validatupdatereport
+    validateupdatereport
 };

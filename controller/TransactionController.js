@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
+const { validatecreatetransaction, validatupdatetransaction } = require("../models/Transaction");
 
 
 const CreateTransaction = asynchandler(async (req, res) => {

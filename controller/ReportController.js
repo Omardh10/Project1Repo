@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
+const { validateupdatereport, validatecreatereport } = require("../models/Report");
 
 
 const CreateReport = asynchandler(async (req, res) => {
@@ -30,7 +31,7 @@ const GetReport = asynchandler(async (req, res) => {
 })
 
 const UpdateReport = asynchandler(async (req, res) => {
-    const { error } = validatupdatereport(req.body);
+    const { error } = validateupdatereport(req.body);
     if (error) {
         return res.status(403).json({ message: error.details[0].message })
     }

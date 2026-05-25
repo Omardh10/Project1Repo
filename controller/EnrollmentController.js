@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
+const { validatecreateenrollment, validateupdateenrollment } = require("../models/Enrollment");
 
 
 const CreateEnrollment = asynchandler(async (req, res) => {
@@ -31,7 +32,7 @@ const GetEnrollment = asynchandler(async (req, res) => {
 })
 
 const UpdateEnrollment = asynchandler(async (req, res) => {
-    const { error } = validatupdateenrollment(req.body);
+    const { error } = validateupdateenrollment(req.body);
     if (error) {
         return res.status(403).json({ message: error.details[0].message })
     }

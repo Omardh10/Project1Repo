@@ -62,5 +62,5 @@ const validatupdatetransaction = (obj) => {
 module.exports = {
     Transaction,
     validatecreatetransaction,
-    validatupdatetransaction
+   validatupdatetransaction
 };
