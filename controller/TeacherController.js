@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
 const { validatecreateteacher, validateupdateteacher } = require("../models/Teacher");
+const { Following } = require("../models/Following");
 
 
 const CreateTeacher = asynchandler(async (req, res) => {
@@ -66,10 +67,41 @@ const DeleteTeacher = asynchandler(async (req, res) => {
 
 })
 
+
+const FollowTeacher = asynchandler(async (req, res) => {
+
+    const teacherId = req.params.id;
+    const studentId = req.user.id;
+    const teacher = await Teacher.findById(teacherId);
+    if (!teacher) {
+        return res.status(404).json({ message: "Teacher not found" });
+    }
+
+    const alreadyFollowing = await Following.findOne({
+        student_id: studentId,
+        teacher_id: teacherId
+    });
+
+    if (alreadyFollowing) {
+        return res.status(400).json({ message: "You are already following this teacher" });
+    }
+
+    const newFollow = await Following.create({
+        student_id: studentId,
+        teacher_id: teacherId
+    });
+    res.status(201).json({ 
+        status: "success", 
+        message: "Successfully followed the teacher",
+        followData: newFollow 
+    });
+});
+
 module.exports = {
     CreateTeacher,
     GetTeacher,
     UpdateTeacher,
     GetTeachers,
-    DeleteTeacher
+    DeleteTeacher,
+    FollowTeacher
 }

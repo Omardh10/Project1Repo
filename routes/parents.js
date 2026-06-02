@@ -1,22 +1,22 @@
 const express = require('express');
 const { GetExams, GetExam, CreateExam, UpdateExam, DeleteExam } = require('../controller/ExamController');
 const { GetParents, GetParent, CreateParent, UpdateParent, DeleteParent } = require('../controller/ParentController');
+const { verifytoken } = require('../middlware/VerifyTokens');
 const router = express.Router();
 
 // Get All Parents
-router.get('/parents', GetParents)
+router.get('/', GetParents)
 
 // Get Single Parent
-router.get('/parent/:id', GetParent)
+router.get('/:id', GetParent)
 
 // Create New Parent
 router.post('/newparent', CreateParent)
-
 // Update Parent
-router.patch('/parent/:id', UpdateParent)
+router.patch('/:id',verifytoken, UpdateParent)
 
 // Delete Parent
-router.delete('/parent/:id', DeleteParent)
+router.delete('/:id',verifytoken, DeleteParent)
 
 
 

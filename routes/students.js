@@ -4,22 +4,23 @@ const { GetParents, GetParent, CreateParent, UpdateParent, DeleteParent } = requ
 const { DeleteReport, UpdateReport, CreateReport, GetReport, GetReports } = require('../controller/ReportController');
 const { GetReviews, GetReview, CreateReview, UpdateReview, DeleteReview } = require('../controller/ReviewController');
 const { GetStudents, GetStudent, CreateStudent, UpdateStudent, DeleteStudent } = require('../controller/StudentController');
+const { verifytoken } = require('../middlware/VerifyTokens');
 const router = express.Router();
 
 // Get All Students
-router.get('/students', GetStudents)
+router.get('/', GetStudents)
 
 // Get Single Student
-router.get('/student/:id', GetStudent)
+router.get('/:id', GetStudent)
 
 // Create New Student
 router.post('/newstudent', CreateStudent)
 
 // Update Student
-router.patch('/student/:id', UpdateStudent)
+router.patch('/:id',verifytoken, UpdateStudent)
 
 // Delete Student
-router.delete('/student/:id', DeleteStudent)
+router.delete('/:id',verifytoken, DeleteStudent)
 
 
 

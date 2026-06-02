@@ -1,21 +1,22 @@
 const express = require('express');
 const { GetCourses, GetCourse, CreateCourse, UpdateCourse, DeleteCourse } = require('../controller/CourseController');
 const router = express.Router();
+const { verifytoken, verifytokenandisAdmin } = require('../middlware/VerifyTokens');
 
 // Get All Courses
-router.get('/courses', GetCourses)
+router.get('/', GetCourses)
 
 // Get Single Course
-router.get('/course/:id', GetCourse)
+router.get('/:id', GetCourse)
 
 // Create New Course
-router.post('/newcourse', CreateCourse)
+router.post('/newcourse', verifytoken, CreateCourse)
 
 // Update Course
-router.patch('/course/:id', UpdateCourse)
+router.patch('/:id', verifytoken, UpdateCourse)
 
 // Delete Course
-router.delete('/course/:id', DeleteCourse)
+router.delete('/:id', verifytoken, DeleteCourse)
 
 
 

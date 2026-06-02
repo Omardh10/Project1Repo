@@ -3,19 +3,19 @@ const { GetTransactions, GetTransaction, CreateTransaction, UpdateTransaction, D
 const router = express.Router();
 
 // Get All Transactions
-router.get('/transactions', GetTransactions)
+router.get('/', GetTransactions)
 
 // Get Single Transaction
-router.get('/transaction/:id', GetTransaction)
+router.get('/:id', GetTransaction)
 
 // Create New Transaction
 router.post('/newtransaction', CreateTransaction)
 
 // Update Transaction
-router.patch('/transaction/:id', UpdateTransaction)
+router.patch('/:id', UpdateTransaction)
 
 // Delete Transaction
-router.delete('/transaction/:id', DeleteTransaction)
+router.delete('/:id', DeleteTransaction)
 
 
 

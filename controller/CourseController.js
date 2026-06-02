@@ -14,16 +14,20 @@ const CreateCourse = asynchandler(async (req, res) => {
         return res.status(403).json({ message: error.details[0].message })
     }
 
-    let NewCourse = Course.create({
+    if (req.user.role !== 'teacher') {
+        let NewCourse = Course.create({
 
-        teacher_id,
-        title,
-        description,
-        category,
-        price
-    })
-    await NewCourse.save();
-    res.status(201).json({ status: "success", course: NewCourse });
+            teacher_id,
+            title,
+            description,
+            category,
+            price
+        })
+        await NewCourse.save();
+        res.status(201).json({ status: "success", course: NewCourse });
+    } else {
+        res.status(403).json({ message: "only teachers can create courses" })
+    }
 })
 
 const PostCourseFiles = asynchandler(async (req, res) => {
@@ -91,16 +95,18 @@ const UpdateCourse = asynchandler(async (req, res) => {
     if (!course) {
         return res.status(404).json({ message: "course not found" })
     }
-    course = await Course.findByIdAndUpdate({ _id: req.params.id }, {
-        $set: {
-            teacher_id,
-            title,
-            description,
-            category,
-            price
-        }
-    }, { new: true })
-    return res.status(202).json({ status: "success", course: course })
+    if (course.teacher_id.toString() == req.user._id.toString()) {
+        course = await Course.findByIdAndUpdate({ _id: req.params.id }, {
+            $set: {
+                teacher_id,
+                title,
+                description,
+                category,
+                price
+            }
+        }, { new: true })
+        return res.status(202).json({ status: "success", course: course })
+    } else { return res.status(403).json({ message: "you are not authorized to update this course" }) }
 
 })
 
@@ -117,9 +123,13 @@ const DeleteCourse = asynchandler(async (req, res) => {
     if (!course) {
         return res.status(404).json({ message: "course not found" })
     }
-    await Course.deleteOne({ _id: req.params.id })
+    if (course.teacher_id.toString() == req.user._id.toString() || req.user.role == 'admin') {
+        await Course.deleteOne({ _id: req.params.id })
 
-    res.status(201).json({ status: "success", message: "course deleted seccussfully" })
+        res.status(201).json({ status: "success", message: "course deleted seccussfully" })
+    } else {
+        return res.status(403).json({ message: "you are not authorized to delete this course" })
+    }
 
 })
 

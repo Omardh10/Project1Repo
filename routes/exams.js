@@ -1,21 +1,22 @@
 const express = require('express');
 const { GetExams, GetExam, CreateExam, UpdateExam, DeleteExam } = require('../controller/ExamController');
+const { verifytoken } = require('../middlware/VerifyTokens');
 const router = express.Router();
 
 // Get All Exams
-router.get('/exams', GetExams)
+router.get('/', verifytoken, GetExams)
 
 // Get Single Exam
-router.get('/exam/:id', GetExam)
+router.get('/:id', GetExam)
 
 // Create New Exam
-router.post('/newexam', CreateExam)
+router.post('/newexam', verifytoken, CreateExam)
 
 // Update Exam
-router.patch('/exam/:id', UpdateExam)
+router.patch('/:id', verifytoken, UpdateExam)
 
 // Delete Exam
-router.delete('/exam/:id', DeleteExam)
+router.delete('/:id', verifytoken, DeleteExam)
 
 
 

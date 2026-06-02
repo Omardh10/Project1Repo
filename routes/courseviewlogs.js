@@ -3,19 +3,19 @@ const { GetCourseViewLogs, GetCourseViewLog, CreateCourseViewLog, UpdateCourseVi
 const router = express.Router();
 
 // Get All CourseViewLogs
-router.get('/coursesviewlogs', GetCourseViewLogs)
+router.get('/', GetCourseViewLogs)
 
 // Get Single CourseViewLog
-router.get('/courseviewlog/:id', GetCourseViewLog)
+router.get('/:id', GetCourseViewLog)
 
 // Create New CourseViewLog
 router.post('/newcourseviewlog', CreateCourseViewLog)
 
 // Update CourseViewLog
-router.patch('/courseviewlog/:id', UpdateCourseViewLog)
+router.patch('/:id', UpdateCourseViewLog)
 
 // Delete CourseViewLog
-router.delete('/courseviewlog/:id', DeleteCourseViewLog)
+router.delete('/:id', DeleteCourseViewLog)
 
 
 

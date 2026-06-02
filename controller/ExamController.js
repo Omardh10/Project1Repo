@@ -38,27 +38,39 @@ const UpdateExam = asynchandler(async (req, res) => {
     if (!exam) {
         return res.status(404).json({ message: "Exam not found" });
     }
-    exam = await Exam.findByIdAndUpdate(req.params.id, {
-        $set: {
-            course_id: req.body.course_id,
-            title: req.body.title,
-            passing_score: req.body.passing_score,
-        }
-    }, { new: true });
-    res.status(200).json({ status: "success", exam });
+    if (req.user.role == 'teacher' && req.user.role == 'admin') {
+        exam = await Exam.findByIdAndUpdate(req.params.id, {
+            $set: {
+                course_id: req.body.course_id,
+                title: req.body.title,
+                passing_score: req.body.passing_score,
+            }
+        }, { new: true });
+        res.status(200).json({ status: "success", exam });
+    } else { return res.status(403).json({ message: "You are not authorized to update this exam" }); }
 })
 
 const GetExams = asynchandler(async (req, res) => {
-    const exams = await Exam.find();
-    res.status(200).json({ status: "success", exams });
+    if (req.user.role == 'teacher' || req.user.role == 'admin') {
+        const exams = await Exam.find();
+        res.status(200).json({ status: "success", exams });
+    } else {
+        return res.status(403).json({ message: "You are not authorized to view exams" });
+    }
 })
 
 const DeleteExam = asynchandler(async (req, res) => {
-    const exam = await Exam.findByIdAndDelete(req.params.id);
+    const exam = await Exam.findById(req.params.id);
     if (!exam) {
         return res.status(404).json({ message: "Exam not found" });
     }
-    res.status(200).json({ status: "success", message: "Exam deleted" });
+    if (req.user.role == 'teacher' || req.user.role == 'admin') {
+        await Exam.deleteOne({ _id: req.params.id });
+        res.status(200).json({ status: "success", message: "Exam deleted successfully" });
+    }
+    else {
+        return res.status(403).json({ message: "You are not authorized to delete this exam" });
+    }
 })
 
 module.exports = {
