@@ -20,7 +20,7 @@ const CreateTeacher = asynchandler(async (req, res) => {
     })
     await NewTeacher.save();
     res.status(201).json({ status: "success", teacher: NewTeacher });
-    
+
 })
 
 
@@ -42,14 +42,18 @@ const UpdateTeacher = asynchandler(async (req, res) => {
     if (!teacher) {
         return res.status(404).json({ message: "Teacher not found" });
     }
-    teacher = await Teacher.findByIdAndUpdate(req.params.id, {
-        $set: {
-            userId: req.body.userId,
-            total_student: req.body.total_student,
-            total_courses: req.body.total_courses
-        }
-    }, { new: true })
-    res.status(202).json({ status: "success", teacher })
+    if (teacher.userId.toString() !== req.user.id || req.user.role === "admin") {
+        teacher = await Teacher.findByIdAndUpdate(req.params.id, {
+            $set: {
+                userId: req.body.userId,
+                total_student: req.body.total_student,
+                total_courses: req.body.total_courses
+            }
+        }, { new: true })
+        res.status(202).json({ status: "success", teacher })
+    } else {
+        res.status(403).json({ message: "You cannot update your own teacher profile" });
+    }
 })
 
 const GetTeachers = asynchandler(async (req, res) => {
@@ -62,8 +66,13 @@ const DeleteTeacher = asynchandler(async (req, res) => {
     if (!teacher) {
         return res.status(404).json({ message: "Teacher not found" });
     }
-    await Teacher.deleteOne({ _id: req.params.id });
-    res.status(200).json({ status: "success", message: "Teacher deleted successfully" })
+    if (teacher.userId.toString() !== req.user.id || req.user.role === "admin") {
+        await Teacher.deleteOne({ _id: req.params.id });
+        res.status(200).json({ status: "success", message: "Teacher deleted successfully" })
+    }
+    else {
+        res.status(403).json({ message: "You cannot delete your own teacher profile" });
+    }
 
 })
 
@@ -90,10 +99,10 @@ const FollowTeacher = asynchandler(async (req, res) => {
         student_id: studentId,
         teacher_id: teacherId
     });
-    res.status(201).json({ 
-        status: "success", 
+    res.status(201).json({
+        status: "success",
         message: "Successfully followed the teacher",
-        followData: newFollow 
+        followData: newFollow
     });
 });
 

@@ -95,7 +95,7 @@ const UpdateCourse = asynchandler(async (req, res) => {
     if (!course) {
         return res.status(404).json({ message: "course not found" })
     }
-    if (course.teacher_id.toString() == req.user._id.toString()) {
+    if (course.teacher_id.userId.toString() == req.user._id.toString()) {
         course = await Course.findByIdAndUpdate({ _id: req.params.id }, {
             $set: {
                 teacher_id,
@@ -123,7 +123,7 @@ const DeleteCourse = asynchandler(async (req, res) => {
     if (!course) {
         return res.status(404).json({ message: "course not found" })
     }
-    if (course.teacher_id.toString() == req.user._id.toString() || req.user.role == 'admin') {
+    if (course.teacher_id.userId.toString() == req.user._id.toString() || req.user.role == 'admin') {
         await Course.deleteOne({ _id: req.params.id })
 
         res.status(201).json({ status: "success", message: "course deleted seccussfully" })

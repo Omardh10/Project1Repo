@@ -5,19 +5,19 @@ const router = express.Router();
 const { verifytoken, verifytokenandisAdmin } = require('../middlware/VerifyTokens');
 
 // Get All Enrollments
-router.get('/', verifytokenandisAdmin,GetEnrollments)
+router.get('/', verifytoken, GetEnrollments)
 
 // Get Single Enrollment
 router.get('/:id', GetEnrollment)
 
 // Create New Enrollment
-router.post('/newenrollment', verifytokenandisAdmin,CreateEnrollment)
+router.post('/newenrollment', verifytoken, CreateEnrollment)
 
 // Update Enrollment
-router.patch('/:id', verifytokenandisAdmin, UpdateEnrollment)
+router.patch('/:id', verifytoken, UpdateEnrollment)
 
 // Delete Enrollment
-router.delete('/:id',verifytokenandisAdmin, DeleteEnrollment)
+router.delete('/:id', verifytoken, DeleteEnrollment)
 
 
 

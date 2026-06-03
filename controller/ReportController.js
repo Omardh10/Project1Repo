@@ -39,15 +39,19 @@ const UpdateReport = asynchandler(async (req, res) => {
     if (!report) {
         return res.status(404).json({ message: "Report not found" });
     }
-    report = await Report.findByIdAndUpdate(req.params.id, {
-        $set: {
-            student_id: req.body.student_id,
-            parent_id: req.body.parent_id,
-            course_id: req.body.course_id,
-            report_data: req.body.report_data
-        }
-    }, { new: true });
-    res.status(200).json({ status: "success", report });
+    if (report.student_id.userId.toString() == req.user.id || report.parent_id.userId.toString() == req.user.id || req.user.role == "admin") {
+        report = await Report.findByIdAndUpdate(req.params.id, {
+            $set: {
+                student_id: req.body.student_id,
+                parent_id: req.body.parent_id,
+                course_id: req.body.course_id,
+                report_data: req.body.report_data
+            }
+        }, { new: true });
+        res.status(200).json({ status: "success", report });
+    } else {
+        res.status(403).json({ message: "You are not authorized to update this report" })
+    }
 })
 
 const GetReports = asynchandler(async (req, res) => {
@@ -60,14 +64,18 @@ const DeleteReport = asynchandler(async (req, res) => {
     if (!report) {
         return res.status(404).json({ message: "Report not found" });
     }
-    await Report.deleteOne({ _id: req.params.id });
-    res.status(200).json({ status: "success", message: "Report deleted successfully" })
+    if (report.student_id.userId.toString() == req.user.id || report.parent_id.userId.toString() == req.user.id || req.user.role == "admin") {
+        await Report.deleteOne({ _id: req.params.id });
+        res.status(200).json({ status: "success", message: "Report deleted successfully" })
+    } else {
+        res.status(403).json({ message: "You are not authorized to delete this report" })
+    }
 })
 
 module.exports = {
-  CreateReport,
-  GetReport,
-  UpdateReport,
-  GetReports,
-  DeleteReport
+    CreateReport,
+    GetReport,
+    UpdateReport,
+    GetReports,
+    DeleteReport
 }

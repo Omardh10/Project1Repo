@@ -7,13 +7,11 @@ const reportSchema = new mongoose.Schema({
         ref: 'Student',
         nullable: true
     },
-
     parent_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Parent',
         nullable: true
     },
-
     course_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Course',

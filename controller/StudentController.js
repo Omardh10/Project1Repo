@@ -7,18 +7,18 @@ const { validateupdatestudent, validatecreatestudent } = require("../models/Stud
 
 const CreateStudent = asynchandler(async (req, res) => {
 
-    const{error}=validatecreatestudent(req.body);
-    if(error){
-        return res.status(403).json({message:error.details[0].message})
+    const { error } = validatecreatestudent(req.body);
+    if (error) {
+        return res.status(403).json({ message: error.details[0].message })
     }
 
     const NewStudent = Student.create({
-        userId:req.body.userId,
-        points_balance:req.body.points_balance,
-        enrolled_courses_count:req.body.enrolled_courses_count
+        userId: req.body.userId,
+        points_balance: req.body.points_balance,
+        enrolled_courses_count: req.body.enrolled_courses_count
     })
     await NewStudent.save();
-    res.status(201).json({status:"success", student:NewStudent});
+    res.status(201).json({ status: "success", student: NewStudent });
 })
 
 
@@ -36,21 +36,23 @@ const UpdateStudent = asynchandler(async (req, res) => {
     if (!student) {
         return res.status(404).json({ message: "Student not found" });
     }
-
     const { error } = validateupdatestudent(req.body);
     if (error) {
         return res.status(403).json({ message: error.details[0].message })
     }
+    if (student.userId.toString() !== req.user.id || req.user.role !== "admin") {
+        student = await Student.findByIdAndUpdate(req.params.id, {
+            $set: {
+                userId: req.body.userId,
+                points_balance: req.body.points_balance,
+                enrolled_courses_count: req.body.enrolled_courses_count
+            }
+        }, { new: true });
 
-    student = await Student.findByIdAndUpdate(req.params.id, {
-        $set: {
-            userId: req.body.userId,
-            points_balance: req.body.points_balance,
-            enrolled_courses_count: req.body.enrolled_courses_count
-        }
-    }, { new: true });
-
-    res.status(200).json({ status: "success", student });
+        res.status(200).json({ status: "success", student });
+    } else {
+        res.status(403).json({ message: "You are not authorized to update this student" })
+    }
 });
 
 const GetStudents = asynchandler(async (req, res) => {
@@ -66,8 +68,12 @@ const DeleteStudent = asynchandler(async (req, res) => {
     if (!student) {
         return res.status(404).json({ message: "Student not found" });
     }
-    await Student.deleteOne({ _id: req.params.id });
-    res.status(200).json({ status: "success", message: "Student deleted successfully" });
+    if (student.userId.toString() !== req.user.id || req.user.role !== "admin") {
+        await Student.deleteOne({ _id: req.params.id });
+        res.status(200).json({ status: "success", message: "Student deleted successfully" });
+    } else {
+        res.status(403).json({ message: "You are not authorized to delete this student" })
+    }
 })
 
 

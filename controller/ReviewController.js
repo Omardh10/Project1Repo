@@ -21,23 +21,24 @@ const CreateReview = asynchandler(async (req, res) => {
     res.status(201).json({ status: "success", review: NewReview });
 })
 
-    const GetReview = asynchandler(async (req, res) => {
-        const review = await Review.findById(req.params.id);
-        if (!review) {
-            return res.status(404).json({ message: "Review not found" });
-        }
-        res.status(200).json({ status: "success", review });
-    })
+const GetReview = asynchandler(async (req, res) => {
+    const review = await Review.findById(req.params.id);
+    if (!review) {
+        return res.status(404).json({ message: "Review not found" });
+    }
+    res.status(200).json({ status: "success", review });
+})
 
-    const UpdateReview = asynchandler(async (req, res) => {
-        const { error } = validateupdatereview(req.body);
-        if (error) {
-            return res.status(403).json({ message: error.details[0].message })
-        }
-        let review = await Review.findById(req.params.id);
-        if (!review) {
-            return res.status(404).json({ message: "Review not found" });
-        }
+const UpdateReview = asynchandler(async (req, res) => {
+    const { error } = validateupdatereview(req.body);
+    if (error) {
+        return res.status(403).json({ message: error.details[0].message })
+    }
+    let review = await Review.findById(req.params.id);
+    if (!review) {
+        return res.status(404).json({ message: "Review not found" });
+    }
+    if (review.student_id.userId.toString() !== req.user.id || req.user.role !== "admin") {
         review = await Review.findByIdAndUpdate(req.params.id, {
             $set: {
                 course_id: req.body.course_id,
@@ -47,25 +48,33 @@ const CreateReview = asynchandler(async (req, res) => {
             }
         }, { new: true });
         res.status(200).json({ status: "success", review });
-    })
-
-    const GetReviews = asynchandler(async (req, res) => {
-        const reviews = await Review.find();
-        res.status(200).json({ status: "success", reviews });
-    })
-
-    const DeleteReview = asynchandler(async (req, res) => {
-        const review = await Review.findByIdAndDelete(req.params.id);
-        if (!review) {
-            return res.status(404).json({ message: "Review not found" });
-        }
-        res.status(200).json({ status: "success", message: "Review deleted" });
-    })
-
-    module.exports = {
-        CreateReview,
-        GetReview,
-        UpdateReview,
-        GetReviews,
-        DeleteReview
+    } else {
+        return res.status(403).json({ message: "You are not authorized to update this review" });
     }
+})
+
+const GetReviews = asynchandler(async (req, res) => {
+    const reviews = await Review.find();
+    res.status(200).json({ status: "success", reviews });
+})
+
+const DeleteReview = asynchandler(async (req, res) => {
+    const review = await Review.findById(req.params.id);
+    if (!review) {
+        return res.status(404).json({ message: "Review not found" });
+    }
+    if (review.student_id.userId.toString() !== req.user.id || req.user.role !== "admin") {
+        await Review.findByIdAndDelete(req.params.id);
+        res.status(200).json({ status: "success", message: "Review deleted successfully" });
+    } else {
+        return res.status(403).json({ message: "You are not authorized to delete this review" });
+    }
+})
+
+module.exports = {
+    CreateReview,
+    GetReview,
+    UpdateReview,
+    GetReviews,
+    DeleteReview
+}

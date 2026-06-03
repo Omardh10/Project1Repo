@@ -17,7 +17,7 @@ const CreateParent = asynchandler(async (req, res) => {
     })
     await NewParent.save();
     res.status(201).json({ status: "success", parent: NewParent });
-    
+
 })
 
 
@@ -31,7 +31,7 @@ const GetParent = asynchandler(async (req, res) => {
 })
 
 const UpdateParent = asynchandler(async (req, res) => {
-  
+
     let parent = await Parent.findById(req.params.id);
     if (!parent) {
         return res.status(404).json({ message: "Parent not found" });
@@ -40,12 +40,16 @@ const UpdateParent = asynchandler(async (req, res) => {
     if (error) {
         return res.status(403).json({ message: error.details[0].message })
     }
-    parent = await Parent.findByIdAndUpdate(req.params.id, {
-        $set: {
-            userId: req.body.userId
-        }
-    }, { new: true })
-    res.status(202).json({ status: "success", parent })
+    if (parent.userId.toString() == req.user.id) {
+        parent = await Parent.findByIdAndUpdate(req.params.id, {
+            $set: {
+                userId: req.body.userId
+            }
+        }, { new: true })
+        res.status(202).json({ status: "success", parent })
+    } else {
+        res.status(403).json({ message: "You are not authorized to update this parent" })
+    }
 })
 
 const GetParents = asynchandler(async (req, res) => {
@@ -59,8 +63,12 @@ const DeleteParent = asynchandler(async (req, res) => {
     if (!parent) {
         return res.status(404).json({ message: "Parent not found" });
     }
-    await Parent.deleteOne({ _id: req.params.id });
-    res.status(200).json({ status: "success", message: "Parent deleted successfully" })
+    if (parent.userId.toString() == req.user.id) {
+        await Parent.deleteOne({ _id: req.params.id });
+        res.status(200).json({ status: "success", message: "Parent deleted successfully" })
+    } else {
+        res.status(403).json({ status: "error", message: "You are not authorized to delete this parent" })
+    }
 
 })
 

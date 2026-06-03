@@ -12,7 +12,7 @@ router.get('/:id', GetTeacher)
 router.post('/newteacher', CreateTeacher)
 
 // Follow Teacher
-router.post('/:id/follow', verifytoken, FollowTeacher)
+router.post('/:id/follow', FollowTeacher)
 
 // Update Teacher
 router.patch('/:id', verifytoken, UpdateTeacher)
