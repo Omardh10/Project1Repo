@@ -40,7 +40,7 @@ const UpdateStudent = asynchandler(async (req, res) => {
     if (error) {
         return res.status(403).json({ message: error.details[0].message })
     }
-    if (student.userId.toString() !== req.user.id || req.user.role !== "admin") {
+    if (student.userId.toString() == req.user.id || req.user.role == "admin") {
         student = await Student.findByIdAndUpdate(req.params.id, {
             $set: {
                 userId: req.body.userId,
@@ -68,7 +68,7 @@ const DeleteStudent = asynchandler(async (req, res) => {
     if (!student) {
         return res.status(404).json({ message: "Student not found" });
     }
-    if (student.userId.toString() !== req.user.id || req.user.role !== "admin") {
+    if (student.userId.toString() == req.user.id || req.user.role == "admin") {
         await Student.deleteOne({ _id: req.params.id });
         res.status(200).json({ status: "success", message: "Student deleted successfully" });
     } else {

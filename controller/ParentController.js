@@ -40,7 +40,7 @@ const UpdateParent = asynchandler(async (req, res) => {
     if (error) {
         return res.status(403).json({ message: error.details[0].message })
     }
-    if (parent.userId.toString() == req.user.id) {
+    if (parent.userId.toString() == req.user.id || req.user.role == 'admin') {
         parent = await Parent.findByIdAndUpdate(req.params.id, {
             $set: {
                 userId: req.body.userId
@@ -63,7 +63,7 @@ const DeleteParent = asynchandler(async (req, res) => {
     if (!parent) {
         return res.status(404).json({ message: "Parent not found" });
     }
-    if (parent.userId.toString() == req.user.id) {
+    if (parent.userId.toString() == req.user.id || req.user.role == 'admin') {
         await Parent.deleteOne({ _id: req.params.id });
         res.status(200).json({ status: "success", message: "Parent deleted successfully" })
     } else {

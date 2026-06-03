@@ -38,7 +38,7 @@ const UpdateReview = asynchandler(async (req, res) => {
     if (!review) {
         return res.status(404).json({ message: "Review not found" });
     }
-    if (review.student_id.userId.toString() !== req.user.id || req.user.role !== "admin") {
+    if (review.student_id.userId.toString() == req.user.id || req.user.role == "admin") {
         review = await Review.findByIdAndUpdate(req.params.id, {
             $set: {
                 course_id: req.body.course_id,
@@ -63,7 +63,7 @@ const DeleteReview = asynchandler(async (req, res) => {
     if (!review) {
         return res.status(404).json({ message: "Review not found" });
     }
-    if (review.student_id.userId.toString() !== req.user.id || req.user.role !== "admin") {
+    if (review.student_id.userId.toString() == req.user.id || req.user.role == "admin") {
         await Review.findByIdAndDelete(req.params.id);
         res.status(200).json({ status: "success", message: "Review deleted successfully" });
     } else {

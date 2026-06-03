@@ -7,18 +7,24 @@ const { validatregister, validatlogin, validatupdateuser, User } = require("../m
 const { RemoveImage, UploadFile } = require("../utils/cloudinary");
 
 const RegisterUser = asynchandler(async (req, res) => {
-
     const { fullname, email, password, Gender, birthdate, role } = req.body;
 
     const { error } = validatregister(req.body);
     if (error) {
-        res.status(400).json({ message: error.details[0].message })
+        return res.status(400).json({ message: error.details[0].message }); // إضافة return ضرورية هنا
     }
-    const olduser = await User.findOne({ email: email })
+
+    const olduser = await User.findOne({ email: email });
     if (olduser) {
-        res.status(400).json({ message: "this user already registered" })
+        return res.status(400).json({ message: "this user already registered" }); // إضافة return ضرورية هنا
     }
-    const hashpassword = await bcrypt.hash(password, 10)
+
+    // شرط الأمان: السماح للأدمن حصراً بإنشاء حسابات الأساتذة والطلاب
+    if ((role === 'student' || role === 'teacher') && (!req.user || req.user.role !== 'admin')) {
+        return res.status(403).json({ message: "Only administrators can create teacher and student accounts" });
+    }
+
+    const hashpassword = await bcrypt.hash(password, 10);
 
     let newuser = new User({
         fullname,
@@ -27,35 +33,60 @@ const RegisterUser = asynchandler(async (req, res) => {
         Gender,
         birthdate,
         role
-    })
-    const token = jwt.sign({ id: newuser._id, role: newuser.role.admin }, process.env.JWT_KEY)
-    newuser.token = token;
-    newuser.save();
-    res.status(201).json({ status: "success", user: newuser });
-})
+    });
 
+    await newuser.save(); // إضافة await ضرورية جداً لحفظ البيانات قبل إكمال الكود
+
+    // توحيد حالة الأحرف: استخدام newuser بدلاً من newUser لتجنب خطأ undefined
+    if (role === 'student') {
+        await Student.create({
+            user_id: newuser._id,
+            points_balance: 0,
+            enrolled_courses_count: 0
+        });
+    } else if (role === 'teacher') {
+        await Instructor.create({
+            user_id: newuser._id,
+            total_students: 0,
+            total_courses: 0,
+            status: 'pending'
+        });
+    } else if (role === 'parent') {
+        await Parent.create({
+            user_id: newuser._id
+        });
+    }
+
+    const token = jwt.sign({ id: newuser._id, role: newuser.role }, process.env.JWT_KEY);
+
+    res.status(201).json({ status: "success", user: newuser, token: token });
+});
 const LoginUser = asynchandler(async (req, res) => {
-
     const { email, password } = req.body;
+
     const { error } = validatlogin(req.body);
     if (error) {
-        return res.status(400).json({ message: error.details[0].message })
+        return res.status(400).json({ message: error.details[0].message });
     }
-    const user = await User.findOne({ email: email })
+
+    const user = await User.findOne({ email: email });
     if (!user) {
-        return res.status(400).json({ message: "invalid email or password" })
+        return res.status(400).json({ message: "invalid email or password" });
     }
-    const matchedpassword = await bcrypt.compare(password, user.password)
+
+    const matchedpassword = await bcrypt.compare(password, user.password);
     if (!matchedpassword) {
-        return res.status(400).json({ message: "invalid email or password" })
+        return res.status(400).json({ message: "invalid email or password" });
     }
-    if (user && matchedpassword) {
-        const token = jwt.sign({ id: user._id, role: user.role.admin }, process.env.JWT_KEY)
-        user.token = token;
-        // user.save();
-        res.status(200).json({ userId: user._id, username: user.username, token: token, });
-    }
-})
+
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_KEY);
+
+    res.status(200).json({
+        userId: user._id,
+        fullname: user.fullname,
+        token: token
+    });
+});
 
 const GetUsers = asynchandler(async (req, res) => {
 
@@ -76,9 +107,8 @@ const GetUser = asynchandler(async (req, res) => {
 
 const PostImageUser = asynchandler(async (req, res) => {
 
-    // console.log(req.file);
     if (!req.file) {
-        res.status(404).json({ message: "no image provided" })
+        return res.status(404).json({ message: "no image provided" })
     }
     //get the path:
     const pathimg = await path.join(__dirname, `../images/${req.file.filename}`)
@@ -93,7 +123,7 @@ const PostImageUser = asynchandler(async (req, res) => {
     }
     await user.save();
 
-    res.status(201).json({ message: "image uploaded seccussfully", profilephoto: { url: result.secure_url, publicId: result.public_id } });
+    return res.status(201).json({ message: "image uploaded seccussfully", profilephoto: { url: result.secure_url, publicId: result.public_id } });
     fs.unlinkSync(pathimg);
 })
 
