@@ -15,6 +15,7 @@ const reviewsroute = require('./routes/reviews');
 const studenntroute = require('./routes/students');
 const teacherroute = require('./routes/teachers');
 const transctionroute = require('./routes/transctions');
+const stdanswerroute = require('./routes/stdanswer');
 require("dotenv").config();
 const app = express();
 const server = http.createServer(app);
@@ -37,6 +38,8 @@ app.use('/api/reviews', reviewsroute)
 app.use('/api/students', studenntroute)
 app.use('/api/teachers', teacherroute)
 app.use('/api/transctions', transctionroute)
+app.use('/api/quastions', quastionroute)
+app.use('/api/studentanswers', stdanswerroute)
 
 
 app.use((req, res, next) => {

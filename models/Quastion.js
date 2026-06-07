@@ -26,7 +26,7 @@ const validatecreatequestion = (obj) => {
     return schema.validate(obj)
 }
 
-const validatupdatequestion = (obj) => {
+const validateupdatequestion = (obj) => {
     const schema = joi.object({
         question_text: joi.string(),
         options: joi.array().items(joi.string()),
@@ -38,5 +38,5 @@ const validatupdatequestion = (obj) => {
 module.exports = {
     Question,
     validatecreatequestion,
-    validatupdatequestion
+    validateupdatequestion
 }
