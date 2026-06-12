@@ -14,7 +14,7 @@ router.get('/profile/:id', GetUser)
 router.post('/auth/register', RegisterUser)
 
 // Login Old User
-router.post('/auth/login',verifytoken, LoginUser)
+router.post('/auth/login', LoginUser)
 
 // Update User
 router.patch('/profile/:id', verifytokenandonlyuser, UpdateUser)
