@@ -22,7 +22,7 @@ const CreateExam = asynchandler(async (req, res) => {
 
 
 const GetExam = asynchandler(async (req, res) => {
-    const exam = await Exam.findById(req.params.id);
+    const exam = await Exam.findById(req.params.id).populate('course_id');
     if (!exam) {
         return res.status(404).json({ message: "Exam not found" });
     }
@@ -34,7 +34,7 @@ const UpdateExam = asynchandler(async (req, res) => {
     if (error) {
         return res.status(403).json({ message: error.details[0].message })
     }
-    let exam = await Exam.findById(req.params.id);
+    let exam = await Exam.findById(req.params.id).populate('course_id');
     if (!exam) {
         return res.status(404).json({ message: "Exam not found" });
     }

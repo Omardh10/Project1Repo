@@ -35,9 +35,8 @@ const RegisterUser = asynchandler(async (req, res) => {
         role
     });
 
-    await newuser.save(); // إضافة await ضرورية جداً لحفظ البيانات قبل إكمال الكود
+    await newuser.save(); 
 
-    // توحيد حالة الأحرف: استخدام newuser بدلاً من newUser لتجنب خطأ undefined
     if (role === 'student') {
         await Student.create({
             user_id: newuser._id,

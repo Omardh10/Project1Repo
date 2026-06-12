@@ -16,6 +16,7 @@ const studenntroute = require('./routes/students');
 const teacherroute = require('./routes/teachers');
 const transctionroute = require('./routes/transctions');
 const stdanswerroute = require('./routes/stdanswer');
+const modelcourseroute = require('./routes/modelcourses');
 require("dotenv").config();
 const app = express();
 const server = http.createServer(app);
@@ -40,7 +41,7 @@ app.use('/api/teachers', teacherroute)
 app.use('/api/transctions', transctionroute)
 app.use('/api/quastions', quastionroute)
 app.use('/api/studentanswers', stdanswerroute)
-
+app.use('/api/modelcourses', modelcourseroute)
 
 app.use((req, res, next) => {
     const error = new Error("This page is not Found")

@@ -61,6 +61,24 @@ const CourseSchema = new mongoose.Schema({
         enum: ['pending', 'approved', 'rejected'],
         default: 'pending'
     },
+    image: {
+        url: {
+            type: String,
+            default: ""
+        },
+        publicId: {
+            type: String,
+            default: null
+        }
+    },
+    founding_ratio: {
+        type: Number,
+        default: 0
+    },
+    isfounder: {
+        type: Boolean,
+        default: false
+    },
     approval_date: {
         type: Date,
         default: Date.now
@@ -77,6 +95,8 @@ const validatecreatecourse = (obj) => {
         description: joi.string().required(),
         category: joi.string().required(),
         price: joi.number().required(),
+        isfounder: joi.boolean(),
+        founding_ratio: joi.number(),
         // lessons: joi.array().items(joi.object({
         //     title: joi.string().required(),
         //     contentType: joi.string().valid('video', 'pdf').required(),
@@ -100,6 +120,8 @@ const validatupdatecourse = (obj) => {
         description: joi.string(),
         category: joi.string(),
         price: joi.number(),
+        isfounder: joi.boolean(),
+        founding_ratio: joi.number(),
         // lessons: joi.array().items(joi.object({
         //     title: joi.string(),
         //     contentType: joi.string().valid('video', 'pdf'),

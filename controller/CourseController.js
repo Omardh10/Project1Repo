@@ -41,7 +41,7 @@ const PostCourseFiles = asynchandler(async (req, res) => {
 
     // get the path:
     const filePath = await path.join(__dirname, `${folderPath}/${req.file.filename}`)
-    const result = await UploadImage(filePath); // UploadImage بتستخدم resource_type: 'auto'
+    const result = await UploadImage(filePath);
 
     const course = await Course.findById(req.params.id);
     if (!course) {
@@ -76,7 +76,7 @@ const PostCourseFiles = asynchandler(async (req, res) => {
 
 const GetCourse = asynchandler(async (req, res) => {
 
-    const course = await Course.findById(req.params.id)
+    const course = await Course.findById(req.params.id).populate('teacher_id');
     if (!course) {
         return res.status(404).json({ message: "course not found" })
     }
@@ -86,12 +86,12 @@ const GetCourse = asynchandler(async (req, res) => {
 
 const UpdateCourse = asynchandler(async (req, res) => {
 
-    const { teacher_id, title, description, category, price } = req.body
+    const { teacher_id, title, description, category, price, isfounder, founding_ratio } = req.body
     const { error } = validatupdatecourse(req.body);
     if (error) {
         return res.status(403).json({ message: error.details[0].message })
     }
-    let course = await Course.findById(req.params.id)
+    let course = await Course.findById(req.params.id).populate('teacher_id');
     if (!course) {
         return res.status(404).json({ message: "course not found" })
     }
@@ -102,12 +102,40 @@ const UpdateCourse = asynchandler(async (req, res) => {
                 title,
                 description,
                 category,
-                price
+                price,
+                isfounder,
+                founding_ratio
             }
         }, { new: true })
         return res.status(202).json({ status: "success", course: course })
     } else { return res.status(403).json({ message: "you are not authorized to update this course" }) }
 
+})
+
+const PostImageCourse = asynchandler(async (req, res) => {
+
+    if (!req.file) {
+        return res.status(404).json({ message: "no image provided" })
+    }
+    //get the path:
+    const pathimg = await path.join(__dirname, `../images/${req.file.filename}`)
+    const result = await UploadFile(pathimg);
+    const course = await Course.findById(req.params.id).populate('teacher_id');
+    if (course.teacher_id.userId.toString() == req.user._id.toString()) {
+        if (course.image.publicId !== null) {
+            await RemoveImage(course.image.publicId);
+        }
+        course.image = {
+            url: result.secure_url,
+            publicId: result.public_id
+        }
+        await course.save();
+
+        return res.status(201).json({ message: "image uploaded seccussfully", courseImage: { url: result.secure_url, publicId: result.public_id } });
+        fs.unlinkSync(pathimg);
+    } else {
+        return res.status(403).json({ message: "you are not authorized to upload image for this course" })
+    }
 })
 
 const GetCourses = asynchandler(async (req, res) => {
@@ -141,5 +169,6 @@ module.exports = {
     GetCourse,
     UpdateCourse,
     GetCourses,
-    DeleteCourse
+    DeleteCourse,
+    PostImageCourse
 }
