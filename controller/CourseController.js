@@ -5,6 +5,8 @@ const fs = require('fs');
 const path = require('path');
 const { validatupdatecourse, Course, validatecreatecourse } = require("../models/Course");
 const { UploadFile } = require("../utils/cloudinary");
+const { Enrollment } = require("../models/Enrollment");
+const { Transaction } = require("../models/Transaction");
 
 const CreateCourse = asynchandler(async (req, res) => {
 
@@ -162,6 +164,55 @@ const DeleteCourse = asynchandler(async (req, res) => {
 })
 
 
+// Purchase a course     معلومات الشراء الخاصة بالكورس  
+const PurchaseCourse = asynchandler(async (req, res) => {
+
+    const studentId = req.user.id; 
+    const courseId = req.params.courseId;
+
+    const course = await Course.findById(courseId);
+    if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+    }
+    if (course.status !== 'approved') {
+        return res.status(400).json({ message: "This course is not available for purchase" });
+    }
+
+    const alreadyEnrolled = await Enrollment.findOne({ student_id: studentId, course_id: courseId });
+    if (alreadyEnrolled) {
+        return res.status(400).json({ message: "You already own this course" });
+    }
+
+    const platformFeePercentage = 0.20; 
+    const platformFee = course.price * platformFeePercentage;
+    const teacherEarnings = course.price - platformFee;
+
+    const transaction = await Transaction.create({
+        student_id: studentId,
+        course_id: course._id,
+        amount_paid: course.price,
+        platform_fee: platformFee,
+        instructor_earnings: teacherEarnings,
+        payment_status: 'completed'
+    });
+
+    const enrollment = await Enrollment.create({
+        student_id: studentId,
+        course_id: course._id,
+        progress_percentage: 0,
+        completion_status: 'in_progress',
+        certificate_issued: false
+    });
+    
+    res.status(201).json({ 
+        status: "success", 
+        message: "Course purchased successfully", 
+        transactionId: transaction._id,
+        enrollmentData: enrollment
+    });
+});
+
+
 
 module.exports = {
     CreateCourse,
@@ -170,5 +221,6 @@ module.exports = {
     UpdateCourse,
     GetCourses,
     DeleteCourse,
-    PostImageCourse
+    PostImageCourse,
+    PurchaseCourse
 }

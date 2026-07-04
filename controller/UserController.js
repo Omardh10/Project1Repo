@@ -11,15 +11,14 @@ const RegisterUser = asynchandler(async (req, res) => {
 
     const { error } = validatregister(req.body);
     if (error) {
-        return res.status(400).json({ message: error.details[0].message }); // إضافة return ضرورية هنا
+        return res.status(400).json({ message: error.details[0].message }); 
     }
 
     const olduser = await User.findOne({ email: email });
     if (olduser) {
-        return res.status(400).json({ message: "this user already registered" }); // إضافة return ضرورية هنا
+        return res.status(400).json({ message: "this user already registered" }); 
     }
 
-    // شرط الأمان: السماح للأدمن حصراً بإنشاء حسابات الأساتذة والطلاب
     if ((role === 'student' || role === 'teacher') && (!req.user || req.user.role !== 'admin')) {
         return res.status(403).json({ message: "Only administrators can create teacher and student accounts" });
     }

@@ -23,8 +23,14 @@ const EnrollmentSchema = new mongoose.Schema({
     certificate_issued: {
         type: Boolean,
         default: false
-    }
-}, { timestamps: true });   
+    },
+    completed_lessons: [
+        { 
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Course'
+         }
+    ]
+}, { timestamps: true });
 
 const Enrollment = mongoose.model('Enrollment', EnrollmentSchema);
 
@@ -34,7 +40,8 @@ const validatecreateenrollment = (obj) => {
         course_id: joi.string().required(),
         progress: joi.number().default(0),
         completion_status: joi.string().valid('not started', 'in progress', 'completed').default('not started'),
-        certificate_issued: joi.boolean().default(false)
+        certificate_issued: joi.boolean().default(false),
+        completed_lessons: joi.array().items(joi.string())
     })
     return schema.validate(obj)
 }
