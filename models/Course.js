@@ -28,6 +28,10 @@ const CourseSchema = new mongoose.Schema({
             type: String,
             required: true
         },
+        description: {
+            type: String,
+            required: true
+        },
         contentType: {
             type: String,
             enum: ['video', 'pdf'],
@@ -48,11 +52,11 @@ const CourseSchema = new mongoose.Schema({
         video_content: {
             url: {
                 type: String,
-                default: ""
+                required:true
             },
             publicId: {
                 type: String,
-                default: null
+                required:true
             }
         }
     }],

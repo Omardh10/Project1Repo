@@ -70,6 +70,35 @@ const videoStorage = multer.diskStorage({
     }
 })
 
+const lessonStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        if (file.fieldname === 'video') {
+            cb(null, path.join(__dirname, '../videos'));
+        } else if (file.fieldname === 'pdf') {
+            cb(null, path.join(__dirname, '../pdfs'));
+        } else {
+            cb(new Error("حقل غير مدعوم"), false);
+        }
+    },
+    filename: function (req, file, cb) {
+        cb(null, new Date().toISOString().replace(/:/g, "-") + file.originalname);
+    }
+});
+
+const uploadLessonFiles = multer({
+    storage: lessonStorage,
+    fileFilter: function (req, file, cb) {
+        if (file.fieldname === 'video' && file.mimetype.startsWith('video')) {
+            cb(null, true);
+        } else if (file.fieldname === 'pdf' && file.mimetype === 'application/pdf') {
+            cb(null, true);
+        } else {
+            cb(new Error("نوع الملف غير مطابق للحقل المطلوب"), false);
+        }
+    },
+    limits: { fileSize: 100 * 1024 * 1024 }
+});
+
 const uploadVideo = multer({
     storage: videoStorage,
     fileFilter: function (req, file, cb) {
@@ -87,5 +116,7 @@ module.exports = {
     pdfStorage,
     uploadPDF,
     videoStorage,
-    uploadVideo
+    uploadVideo,
+    uploadLessonFiles,
+    lessonStorage
 }
