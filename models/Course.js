@@ -16,7 +16,8 @@ const CourseSchema = new mongoose.Schema({
         required: true
     },
     category: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Category',
         required: true
     },
     price: {
@@ -25,6 +26,10 @@ const CourseSchema = new mongoose.Schema({
     },
     lessons: [{
         title: {
+            type: String,
+            required: true
+        },
+        about_course: {
             type: String,
             required: true
         },
@@ -37,7 +42,6 @@ const CourseSchema = new mongoose.Schema({
             enum: ['video', 'pdf'],
             required: true
         },
-
         pdf_content: {
             url: {
                 type: String,
@@ -52,11 +56,11 @@ const CourseSchema = new mongoose.Schema({
         video_content: {
             url: {
                 type: String,
-                required:true
+                required: true
             },
             publicId: {
                 type: String,
-                required:true
+                required: true
             }
         }
     }],

@@ -231,6 +231,34 @@ const DeleteCourse = asynchandler(async (req, res) => {
     }
 });
 
+const FilterCourses = asynchandler(async (req, res) => {
+    const { keyword, category } = req.query; 
+
+    let filterQuery = {};
+
+    if (keyword) {
+        filterQuery.title = { $regex: keyword, $options: 'i' };
+    }
+
+    if (category) {
+        filterQuery.category = category; 
+    }
+
+    const courses = await Course.find(filterQuery)
+        .select('-lessons')
+        .populate('teacher_id', 'name email'); 
+
+    if (courses.length === 0) {
+        return res.status(404).json({ message: "No courses found matching your criteria" });
+    }
+
+    res.status(200).json({ 
+        status: "success", 
+        results: courses.length,
+        courses 
+    });
+});
+
 const PurchaseCourse = asynchandler(async (req, res) => {
     const purchaserId = req.user.id || req.user._id; 
     const purchaserRole = req.user.role;
@@ -311,5 +339,6 @@ module.exports = {
     GetCourses,
     DeleteCourse,
     PostImageCourse,
-    PurchaseCourse
+    PurchaseCourse,
+    FilterCourses
 };

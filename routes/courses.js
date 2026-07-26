@@ -1,5 +1,5 @@
 const express = require('express');
-const { GetCourses, GetCourse, CreateCourse, UpdateCourse, DeleteCourse, PostImageCourse, PurchaseCourse, PostCourseFiles } = require('../controller/CourseController');
+const { GetCourses, GetCourse, CreateCourse, UpdateCourse, DeleteCourse, PostImageCourse, PurchaseCourse, PostCourseFiles, FilterCourses } = require('../controller/CourseController');
 const router = express.Router();
 const { verifytoken, verifytokenandisAdmin } = require('../middlware/VerifyTokens');
 const { CompleteLesson } = require('../controller/EnrollmentController');
@@ -38,6 +38,9 @@ router.post('/purchasecourse/:courseId', verifytoken, PurchaseCourse)
 
 // complete lesson
 router.patch('/complete-lesson', verifytoken, CompleteLesson);
+
+// search course
+router.get('/search', FilterCourses);
 
 
 module.exports = router;
