@@ -44,7 +44,6 @@ const PostCourseFiles = asynchandler(async (req, res) => {
     if (course.teacher_id.toString() !== reqUserId.toString()) {
         return res.status(403).json({ message: "You are not authorized to add lessons to this course" });
     }
-
     const videoFile = req.files.video[0];
     const videoPath = path.join(__dirname, `../videos/${videoFile.filename}`);
     
@@ -180,30 +179,40 @@ const UpdateCourse = asynchandler(async (req, res) => {
 
 const PostImageCourse = asynchandler(async (req, res) => {
     if (!req.file) {
-        return res.status(404).json({ message: "no image provided" });
+        return res.status(400).json({ message: "no image provided" });
     }
-    const pathimg = path.join(__dirname, `../images/${req.file.filename}`);
-    const result = await UploadFile(pathimg);
-    
-    const course = await Course.findById(req.params.id);
-    const reqUserId = req.user.id || req.user._id;
 
-    if (course.teacher_id.toString() === reqUserId.toString()) {
-        if (course.image && course.image.publicId !== null) {
-            await RemoveImage(course.image.publicId);
-        }
-        course.image = {
-            url: result.secure_url,
-            publicId: result.public_id
-        };
-        await course.save();
-        fs.unlinkSync(pathimg);
-        
-        return res.status(201).json({ message: "image uploaded successfully", courseImage: { url: result.secure_url, publicId: result.public_id } });
-    } else {
+    const pathimg = path.join(__dirname, `../images/${req.file.filename}`);
+    const course = await Course.findById(req.params.id);
+
+    if (!course) {
+        fs.unlinkSync(pathimg); 
+        return res.status(404).json({ message: "Course not found" });
+    }
+
+    const reqUserId = req.user.id || req.user._id;
+    if (course.teacher_id.toString() !== reqUserId.toString()) {
         fs.unlinkSync(pathimg); 
         return res.status(403).json({ message: "you are not authorized to upload image for this course" });
     }
+
+    const result = await UploadFile(pathimg);
+
+    if (course.image && course.image.publicId) {
+        await RemoveImage(course.image.publicId);
+    }
+
+    course.image = {
+        url: result.secure_url,
+        publicId: result.public_id
+    };
+    await course.save();
+    fs.unlinkSync(pathimg);
+
+    return res.status(201).json({ 
+        message: "image uploaded successfully", 
+        courseImage: { url: result.secure_url, publicId: result.public_id } 
+    });
 });
 
 

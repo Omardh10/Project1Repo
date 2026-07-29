@@ -98,7 +98,7 @@ const Course = mongoose.model('Course', CourseSchema);
 
 const validatecreatecourse = (obj) => {
     const schema = joi.object({
-        teacher_id: joi.string().required(),
+        teacher_id: joi.string(),
         title: joi.string().required(),
         description: joi.string().required(),
         category: joi.string().required(),
