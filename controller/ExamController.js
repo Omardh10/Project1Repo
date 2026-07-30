@@ -4,6 +4,8 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
 const { validateupdateexam, validatecreateexam } = require("../models/Exam");
+const { Question } = require("../models/Quastion");
+const { StudentAnswer } = require("../models/StudentAnswer");
 
 
 const CreateExam = asynchandler(async (req, res) => {
@@ -73,10 +75,63 @@ const DeleteExam = asynchandler(async (req, res) => {
     }
 })
 
+const SubmitExam = asynchandler(async (req, res) => {
+    const { exam_id, answers } = req.body; 
+
+    const student_id = req.user.id || req.user._id;
+    const exam = await Exam.findById(exam_id);
+    if (!exam) {
+        return res.status(404).json({ message: "Exam not found" });
+    }
+    const questions = await Question.find({ exam_id });
+    if (questions.length === 0) {
+        return res.status(400).json({ message: "No questions found for this exam" });
+    }
+
+    let correctCount = 0;
+    for (const item of answers) {
+        const question = questions.find(q => q._id.toString() === item.question_id);
+
+        if (question) {
+            const isCorrect = (question.correct_answer === item.selected_option);
+            
+            if (isCorrect) {
+                correctCount++;
+            }
+            await StudentAnswer.create({
+                student_id: student_id,
+                question_id: item.question_id,
+                selected_option: item.selected_option,
+                is_correct: isCorrect
+            });
+        }
+    }
+
+    const totalQuestions = questions.length;
+    const scorePercentage = (correctCount / totalQuestions) * 100;
+ 
+    const isPassed = scorePercentage >= exam.passing_score;
+
+    res.status(200).json({
+        status: "success",
+        result: {
+            totalQuestions,
+            correctAnswers: correctCount,
+            scorePercentage: Math.round(scorePercentage),
+            passingScore: exam.passing_score,
+            isPassed,
+            message: isPassed 
+                ? "مبروك! لقد اجتزت الاختبار بنجاح 🎉" 
+                : "للأسف، لم تتجاوز نسبة النجاح المطلوبة 💔"
+        }
+    });
+});
+
 module.exports = {
     CreateExam,
     GetExam,
     UpdateExam,
     GetExams,
-    DeleteExam
+    DeleteExam,
+    SubmitExam
 }

@@ -77,6 +77,24 @@ const LoginUser = asynchandler(async (req, res) => {
         return res.status(400).json({ message: "invalid email or password" });
     }
 
+    if (user.role === 'teacher') {
+
+    const { Teacher } = require('../models/Teacher'); 
+    const teacherData = await Teacher.findOne({ userId: user._id });
+
+    if (!teacherData) {
+        return res.status(404).json({ message: "بيانات المدرس غير موجودة" });
+    }
+
+    if (teacherData.stetus === 'pending') {
+        return res.status(403).json({ message: "حسابك كمعلم بانتظار موافقة الإدارة." });
+    }
+    
+    if (teacherData.stetus === 'rejected') {
+        return res.status(403).json({ message: "عذراً، تم رفض طلب انضمامك كمعلم." });
+    }
+}
+
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_KEY);
 
     res.status(200).json({
@@ -108,7 +126,6 @@ const PostImageUser = asynchandler(async (req, res) => {
     if (!req.file) {
         return res.status(404).json({ message: "no image provided" })
     }
-    //get the path:
     const pathimg = await path.join(__dirname, `../images/${req.file.filename}`)
     const result = await UploadFile(pathimg);
     const user = await User.findById(req.user.id);

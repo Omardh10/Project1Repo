@@ -1,22 +1,22 @@
 const express = require('express');
 const { verifytoken } = require('../middlware/VerifyTokens');
-const { GetQuastions, GetQuastion, DeleteQuastion, UpdateQuastion, CreateQuastion } = require('../controller/QuastionController');
+const { GetQuestions, GetQuestion, CreateQuestion, UpdateQuestion, DeleteQuestion } = require('../controller/QuastionController');
 const router = express.Router();
 
 // Get All Questions
-router.get('/', verifytoken, GetQuastions)
+router.get('/', verifytoken, GetQuestions)
 
 // Get Single Question
-router.get('/:id', GetQuastion)
+router.get('/:id', GetQuestion)
 
 // Create New Question
-router.post('/newquestion', verifytoken, CreateQuastion)
+router.post('/newquestion', verifytoken, CreateQuestion)
 
 // Update Question
-router.patch('/:id', verifytoken, UpdateQuastion)
+router.patch('/:id', verifytoken, UpdateQuestion)
 
 // Delete Question
-router.delete('/:id', verifytoken, DeleteQuastion)
+router.delete('/:id', verifytoken, DeleteQuestion)
 
 
 

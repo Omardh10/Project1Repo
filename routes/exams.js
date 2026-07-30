@@ -1,5 +1,5 @@
 const express = require('express');
-const { GetExams, GetExam, CreateExam, UpdateExam, DeleteExam } = require('../controller/ExamController');
+const { GetExams, GetExam, CreateExam, UpdateExam, DeleteExam, SubmitExam } = require('../controller/ExamController');
 const { verifytoken } = require('../middlware/VerifyTokens');
 const router = express.Router();
 
@@ -18,7 +18,7 @@ router.patch('/:id', verifytoken, UpdateExam)
 // Delete Exam
 router.delete('/:id', verifytoken, DeleteExam)
 
-
+router.post('/submit', verifytoken, SubmitExam)
 
 
 module.exports = router;
