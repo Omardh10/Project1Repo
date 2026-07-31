@@ -186,7 +186,7 @@ const DeleteUser = asynchandler(async (req, res) => {
 })
 
  const getStudentOfTeacher = asynchandler(async (req, res) => {
-   const user
+   
 
 
  })
