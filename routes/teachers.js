@@ -1,12 +1,14 @@
 const express = require('express');
 const { GetTeachers, GetTeacher,GetTeacherByUserId, CreateTeacher,GetMyProfile, UpdateTeacher, DeleteTeacher, FollowTeacher } = require('../controller/TeacherController');
 const router = express.Router();
+const {getStudentOfTeacher} = require('../controller/EnrollmentController')
 const { verifytoken } = require('../middlware/VerifyTokens');
 // Get All Teachers
 router.get('/', GetTeachers)
 
 router.get('/myprofile', verifytoken, GetMyProfile)
 
+router.get('/students',verifytoken,getStudentOfTeacher)
 // Get Single Teacher
 router.get('/:id', GetTeacher)
 
