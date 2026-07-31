@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
-const { validateupdateexam, validatecreateexam } = require("../models/Exam");
+const { validateupdateexam, validatecreateexam, Exam } = require("../models/Exam");
 const { Question } = require("../models/Quastion");
 const { StudentAnswer } = require("../models/StudentAnswer");
 
@@ -40,7 +40,7 @@ const UpdateExam = asynchandler(async (req, res) => {
     if (!exam) {
         return res.status(404).json({ message: "Exam not found" });
     }
-    if (req.user.role == 'teacher' && req.user.role == 'admin') {
+    if (req.user.role == 'teacher' || req.user.role == 'admin') {
         exam = await Exam.findByIdAndUpdate(req.params.id, {
             $set: {
                 course_id: req.body.course_id,

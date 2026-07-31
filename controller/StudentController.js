@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
-const { validateupdatestudent, validatecreatestudent } = require("../models/Student");
+const { validateupdatestudent, validatecreatestudent, Student } = require("../models/Student");
 
 const CreateStudent = asynchandler(async (req, res) => {
 
@@ -17,13 +17,21 @@ const CreateStudent = asynchandler(async (req, res) => {
         points_balance: req.body.points_balance,
         enrolled_courses_count: req.body.enrolled_courses_count
     })
-    await NewStudent.save();
+
     res.status(201).json({ status: "success", student: NewStudent });
 })
 
 
 const GetStudent = asynchandler(async (req, res) => {
     const student = await Student.findById(req.params.id);
+    if (!student) {
+        return res.status(404).json({ message: "Student not found" });
+    }
+    res.status(200).json({ status: "success", student });
+});
+
+const GetStudentByUserId = asynchandler(async (req, res) => {
+    const student = await Student.findOne({ userId: req.params.userId });
     if (!student) {
         return res.status(404).json({ message: "Student not found" });
     }
@@ -83,5 +91,6 @@ module.exports = {
     GetStudent,
     UpdateStudent,
     GetStudents,
-    DeleteStudent
+    DeleteStudent,
+    GetStudentByUserId
 }

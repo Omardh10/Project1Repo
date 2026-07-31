@@ -15,6 +15,10 @@ const CourseSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+      duration: {
+        type: Number,
+        default: 0
+    },
     category: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Category',
@@ -56,11 +60,15 @@ const CourseSchema = new mongoose.Schema({
         video_content: {
             url: {
                 type: String,
-                required: true
+                default: null 
             },
             publicId: {
                 type: String,
                 required: true
+            },
+               duration: { 
+                type: Number, 
+                default: 0 
             }
         }
     }],
@@ -93,6 +101,18 @@ const CourseSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
+CourseSchema.pre('save', function() {
+    if (this.lessons && this.lessons.length > 0) {
+        this.duration = this.lessons.reduce((total, lesson) => {
+            if (lesson.contentType === 'video' && lesson.video_content?.duration) {
+                return total + lesson.video_content.duration;
+            }
+            return total;
+        }, 0);
+    } else {
+        this.duration = 0;
+    }
+});
 
 const Course = mongoose.model('Course', CourseSchema);
 
@@ -130,18 +150,7 @@ const validatupdatecourse = (obj) => {
         price: joi.number(),
         isfounder: joi.boolean(),
         founding_ratio: joi.number(),
-        // lessons: joi.array().items(joi.object({
-        //     title: joi.string(),
-        //     contentType: joi.string().valid('video', 'pdf'),
-        //     pdf_content: joi.object({
-        //         url: joi.string().default(""),
-        //         publicId: joi.string().default(null)
-        //     }),
-        //     video_content: joi.object({
-        //         url: joi.string().default(""),
-        //         publicId: joi.string().default(null)
-        //     })
-        // }))
+        lessons: joi.array()
     })
     return schema.validate(obj)
 }
