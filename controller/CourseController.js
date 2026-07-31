@@ -7,78 +7,107 @@ const { validatupdatecourse, Course, validatecreatecourse } = require("../models
 const { UploadFile, RemoveImage } = require("../utils/cloudinary"); // تأكد من استيراد RemoveImage
 const { Enrollment } = require("../models/Enrollment");
 const { Transaction } = require("../models/Transaction");
+const { validatecreateteacher, validateupdateteacher , Teacher} = require("../models/Teacher");
 
 const CreateCourse = asynchandler(async (req, res) => {
-    const { title, description, category, price } = req.body;
-    
+
+    const { teacher_id, title, description, category, price, lessons } = req.body
     const { error } = validatecreatecourse(req.body);
     if (error) {
-        return res.status(403).json({ message: error.details[0].message });
+        return res.status(403).json({ message: error.details[0].message })
     }
 
-    if (req.user.role === 'teacher') {
-        let NewCourse = await Course.create({
-            teacher_id: req.user.id || req.user._id, 
-            title,
-            description,
-            category,
-            price
-        });
-        res.status(201).json({ status: "success", course: NewCourse });
-    } else {
-        res.status(403).json({ message: "only teachers can create courses" });
-    }
-});
+    const NewCourse =await Course.create({
+        teacher_id,
+        title,
+        description,
+        category,
+        price
+    })
+  
+    res.status(201).json({ status: "success", course: NewCourse });
+})
 
 const PostCourseFiles = asynchandler(async (req, res) => {
-    if (!req.files || !req.files.video) {
-        return res.status(400).json({ message: "Video file is required" });
+    const videoFile = req.files?.['video']?.[0];
+    const pdfFile = req.files?.['pdf']?.[0];
+
+    if (!videoFile) {
+        return res.status(400).json({ message: "يرجى اختيار مقطع الفيديو للدرس" });
     }
 
     const course = await Course.findById(req.params.id);
     if (!course) {
-        return res.status(404).json({ message: "Course not found" });
+        if (videoFile && fs.existsSync(videoFile.path)) fs.unlinkSync(videoFile.path);
+        if (pdfFile && fs.existsSync(pdfFile.path)) fs.unlinkSync(pdfFile.path);
+        return res.status(404).json({ message: "الدورة غير موجودة" });
     }
 
-    const reqUserId = req.user.id || req.user._id;
-    if (course.teacher_id.toString() !== reqUserId.toString()) {
-        return res.status(403).json({ message: "You are not authorized to add lessons to this course" });
-    }
-    const videoFile = req.files.video[0];
-    const videoPath = path.join(__dirname, `../videos/${videoFile.filename}`);
-    
-    const videoResult = await UploadFile(videoPath); 
+    let videoResult = null;
     let pdfResult = null;
-    let pdfPath = null;
-    
-    if (req.files.pdf) {
-        const pdfFile = req.files.pdf[0];
-        pdfPath = path.join(__dirname, `../pdfs/${pdfFile.filename}`);
-        pdfResult = await UploadFile(pdfPath);
+
+    try {
+        // 1. رفع مقطع الفيديو إلى Cloudinary
+        videoResult = await UploadFile(videoFile.path, 'video');
+        if (fs.existsSync(videoFile.path)) fs.unlinkSync(videoFile.path);
+
+        // 2. رفع ملف الـ PDF إن وجد
+        if (pdfFile) {
+            pdfResult = await UploadFile(pdfFile.path, 'raw');
+            if (fs.existsSync(pdfFile.path)) fs.unlinkSync(pdfFile.path);
+        }
+
+        // استخراج القيم بأمان من استجابة Cloudinary
+        const videoUrl = videoResult?.secure_url || videoResult?.url;
+        const videoPublicId = videoResult?.public_id || videoResult?.publicId;
+        // قراءة المدة بالثواني من استجابة Cloudinary
+        const videoDuration = videoResult?.duration || 0; 
+
+        if (!videoUrl || !videoPublicId) {
+            throw new Error("فشل الحصول على رابط الفيديو أو publicId من Cloudinary");
+        }
+
+        // 3. بناء كائن الدرس مع الحقول المطلوبة في الـ Schema
+        const newLesson = {
+            title: req.body.title || "درس جديد",
+            description: req.body.description || req.body.title || "وصف الدرس",
+            about_course: req.body.about_course || "عن الدرس",
+            contentType: req.body.contentType || 'video',
+            video_content: {
+                url: videoUrl,
+                publicId: videoPublicId,
+                duration: videoDuration // ⏱️ تمرير مدة الفيديو هنا
+            },
+            pdf_content: pdfResult ? {
+                url: pdfResult.secure_url || pdfResult.url,
+                publicId: pdfResult.public_id || pdfResult.publicId
+            } : undefined
+        };
+
+        // 4. حفظ الدرس في قاعدة البيانات
+        // عند استدعاء course.save()، سيعمل الـ pre('save') hook تلقائياً
+        // ليحسب مجموع أوقات كل الدروس ويخزنه في course.duration
+        course.lessons.push(newLesson);
+        await course.save();
+
+        return res.status(201).json({
+            message: "تم رفع الدرس وملحقاته بنجاح",
+            lesson: newLesson,
+            totalCourseDuration: course.duration // إرجاع إجمالي المدة الجديدة للمستند في الاستجابة
+        });
+
+    } catch (error) {
+        console.error("DETAILS_OF_UPLOAD_ERROR:", error);
+
+        // تنظيف الملفات المؤقتة عند حدوث خطأ
+        if (videoFile && fs.existsSync(videoFile.path)) fs.unlinkSync(videoFile.path);
+        if (pdfFile && fs.existsSync(pdfFile.path)) fs.unlinkSync(pdfFile.path);
+
+        return res.status(500).json({ 
+            message: "حدث خطأ أثناء معالجة ورفع الملفات",
+            errorDetails: error.message || error 
+        });
     }
-
-    course.lessons.push({
-        title: req.body.title,
-        description: req.body.description, 
-        contentType: req.body.contentType || 'video', 
-        video_content: {
-            url: videoResult.secure_url,
-            publicId: videoResult.public_id
-        },
-        pdf_content: pdfResult ? {
-            url: pdfResult.secure_url,
-            publicId: pdfResult.public_id
-        } : undefined
-    });
-
-    await course.save();
-    fs.unlinkSync(videoPath);
-    if (pdfPath) fs.unlinkSync(pdfPath);
-
-    res.status(201).json({
-        message: "Lesson added successfully",
-        lesson: course.lessons[course.lessons.length - 1]
-    });
 });
 
 // 3. Get Course Details (Lock/Unlock logic)
@@ -146,73 +175,79 @@ const GetCourse = asynchandler(async (req, res) => {
     });
 });
 
+const GetMyCourses = asynchandler(async (req, res) => {
+ 
+    const teacher = await Teacher.findOne({ userId: req.user.id });
+    const courses = await Course.find({ teacher_id: teacher.id }).populate('category');
+    console.log("Teacher ID:", teacher.id);
+    console.log("useer:" , req.user.id);
+    res.status(200).json({ status: "success", courses })
+
+})
+
+
 const UpdateCourse = asynchandler(async (req, res) => {
-    const { title, description, category, price, isfounder, founding_ratio } = req.body; // شلنا teacher_id من التعديل
+    // 1. التحقق من البيانات المرسلة
     const { error } = validatupdatecourse(req.body);
     if (error) {
-        return res.status(403).json({ message: error.details[0].message });
+        return res.status(400).json({ message: error.details[0].message }); // 400 Bad Request
     }
 
-    let course = await Course.findById(req.params.id);
+    // 2. التحديث المباشر وتفادي قيم undefined
+    const course = await Course.findByIdAndUpdate(
+        req.params.id,
+        { $set: req.body }, // يدمج فقط الحقول الموجودة في req.body
+        { new: true, runValidators: true }
+    );
+
     if (!course) {
         return res.status(404).json({ message: "course not found" });
     }
 
-    const reqUserId = req.user.id || req.user._id;
-    if (course.teacher_id.toString() === reqUserId.toString()) {
-        course = await Course.findByIdAndUpdate({ _id: req.params.id }, {
-            $set: {
-                title,
-                description,
-                category,
-                price,
-                isfounder,
-                founding_ratio
-            }
-        }, { new: true }).populate('teacher_id');
-        
-        return res.status(202).json({ status: "success", course: course });
-    } else { 
-        return res.status(403).json({ message: "you are not authorized to update this course" }); 
-    }
+    return res.status(200).json({ status: "success", course: course });
 });
-
 const PostImageCourse = asynchandler(async (req, res) => {
-    if (!req.file) {
+        if (!req.file) {
         return res.status(400).json({ message: "no image provided" });
     }
 
     const pathimg = path.join(__dirname, `../images/${req.file.filename}`);
+    
+    // التحقق من وجود الكورس أولاً قبل رفع الصورة لسيرفر السحاب (Optimization)
     const course = await Course.findById(req.params.id);
-
     if (!course) {
-        fs.unlinkSync(pathimg); 
+        if (fs.existsSync(pathimg)) fs.unlinkSync(pathimg);
         return res.status(404).json({ message: "Course not found" });
     }
+       
+  
 
     const reqUserId = req.user.id || req.user._id;
-    if (course.teacher_id.toString() !== reqUserId.toString()) {
-        fs.unlinkSync(pathimg); 
-        return res.status(403).json({ message: "you are not authorized to upload image for this course" });
+ const t = await Teacher.findOne({ userId: reqUserId });
+ 
+    if (course.teacher_id.toString() == t._id.toString()) {
+        const result = await UploadFile(pathimg);
+
+        if (course.image && course.image.publicId) {
+            await RemoveImage(course.image.publicId);
+        }
+
+        course.image = {
+            url: result.secure_url,
+            publicId: result.public_id
+        };
+
+        await course.save();
+        if (fs.existsSync(pathimg)) fs.unlinkSync(pathimg);
+        
+        return res.status(200).json({ 
+            message: "Image uploaded successfully", 
+            courseImage: { url: result.secure_url, publicId: result.public_id } 
+        });
+    } else {
+        if (fs.existsSync(pathimg)) fs.unlinkSync(pathimg); 
+        return res.status(403).json({ message: "You are not authorized to upload image for this course" });
     }
-
-    const result = await UploadFile(pathimg);
-
-    if (course.image && course.image.publicId) {
-        await RemoveImage(course.image.publicId);
-    }
-
-    course.image = {
-        url: result.secure_url,
-        publicId: result.public_id
-    };
-    await course.save();
-    fs.unlinkSync(pathimg);
-
-    return res.status(201).json({ 
-        message: "image uploaded successfully", 
-        courseImage: { url: result.secure_url, publicId: result.public_id } 
-    });
 });
 
 
@@ -349,5 +384,6 @@ module.exports = {
     DeleteCourse,
     PostImageCourse,
     PurchaseCourse,
-    FilterCourses
+    FilterCourses,
+    GetMyCourses
 };

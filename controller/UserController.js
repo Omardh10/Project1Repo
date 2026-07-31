@@ -98,8 +98,7 @@ const LoginUser = asynchandler(async (req, res) => {
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_KEY);
 
     res.status(200).json({
-        userId: user._id,
-        fullname: user.fullname,
+  user: user,
         token: token
     });
 });

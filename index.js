@@ -30,6 +30,7 @@ ConnectToDb();
 
 app.use('/api/users', userroute)
 app.use('/api/courses', courseroute)
+app.use('/api/categories', require('./routes/catogary'))
 app.use('/api/courseviewlogs', courseviewlogroute)
 app.use('/api/enrollments', enrollmentroute)
 app.use('/api/exams', examroute)
