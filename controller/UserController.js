@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { validatregister, validatlogin, validatupdateuser, User } = require("../models/User");
 const { RemoveImage, UploadFile } = require("../utils/cloudinary");
+const { Student } = require("../models/Student");
 
 const RegisterUser = asynchandler(async (req, res) => {
     const { fullname, email, password, Gender, birthdate, role } = req.body;
@@ -19,9 +20,9 @@ const RegisterUser = asynchandler(async (req, res) => {
         return res.status(400).json({ message: "this user already registered" }); 
     }
 
-    if ((role === 'student' || role === 'teacher') && (!req.user || req.user.role !== 'admin')) {
-        return res.status(403).json({ message: "Only administrators can create teacher and student accounts" });
-    }
+    // if ((role === 'student' || role === 'teacher') && (!req.user || req.user.role !== 'admin')) {
+    //     return res.status(403).json({ message: "Only administrators can create teacher and student accounts" });
+    // }
 
     const hashpassword = await bcrypt.hash(password, 10);
 
@@ -38,20 +39,20 @@ const RegisterUser = asynchandler(async (req, res) => {
 
     if (role === 'student') {
         await Student.create({
-            user_id: newuser._id,
+            userId: newuser._id,
             points_balance: 0,
             enrolled_courses_count: 0
         });
     } else if (role === 'teacher') {
         await Instructor.create({
-            user_id: newuser._id,
+            userId: newuser._id,
             total_students: 0,
             total_courses: 0,
             status: 'pending'
         });
     } else if (role === 'parent') {
         await Parent.create({
-            user_id: newuser._id
+            userId: newuser._id
         });
     }
 
@@ -183,6 +184,12 @@ const DeleteUser = asynchandler(async (req, res) => {
         return res.status(201).json({ message: "deleted seccussfuly ... " })
     }
 })
+
+ const getStudentOfTeacher = asynchandler(async (req, res) => {
+   const user
+
+
+ })
 
 const CheckEmailUser = asynchandler(async (req, res) => {
 

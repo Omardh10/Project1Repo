@@ -7,6 +7,7 @@ const { validatupdatecourse, Course, validatecreatecourse } = require("../models
 const { UploadFile, RemoveImage } = require("../utils/cloudinary"); // تأكد من استيراد RemoveImage
 const { Enrollment } = require("../models/Enrollment");
 const { Transaction } = require("../models/Transaction");
+const { Student } = require('../models/Student')
 const { validatecreateteacher, validateupdateteacher , Teacher} = require("../models/Teacher");
 
 const CreateCourse = asynchandler(async (req, res) => {
@@ -111,6 +112,70 @@ const PostCourseFiles = asynchandler(async (req, res) => {
 });
 
 // 3. Get Course Details (Lock/Unlock logic)
+// const GetCourse = asynchandler(async (req, res) => {
+//     const course = await Course.findById(req.params.id).populate('teacher_id');
+//     if (!course) {
+//         return res.status(404).json({ message: "course not found" });
+//     }
+
+//     let isAuthorized = false;
+//     let userId = null;
+//     let userRole = null;
+//     const authtoken = req.headers.authorization;
+    
+//     if (authtoken) {
+//         const token = authtoken.split(" ")[1];
+//         try {
+//             const decoded = jwt.verify(token, process.env.JWT_KEY);
+//             userId = decoded.id || decoded._id; 
+//             userRole = decoded.role;
+//         } catch (error) {}
+//     }
+    
+//     if (userId) {
+//         const isAdmin = userRole === 'admin';
+//         const isOwner = course.teacher_id && course.teacher_id._id && 
+//                         course.teacher_id._id.toString() === userId.toString();
+
+//         if (isAdmin || isOwner) {
+//             isAuthorized = true; 
+//         } else {
+//             const enrollment = await Enrollment.findOne({ student_id: userId, course_id: course._id });
+//             if (enrollment) {
+//                 isAuthorized = true;
+//             }
+//         }
+//     }
+
+//     let courseToSend = course.toObject();
+//     if (!isAuthorized) {
+//         if (courseToSend.lessons && courseToSend.lessons.length > 0) {
+//             courseToSend.lessons = courseToSend.lessons.map(lesson => {
+//                 return {
+//                     _id: lesson._id,
+//                     title: lesson.title,
+//                     description: lesson.description,
+//                     contentType: lesson.contentType, 
+//                     video_content: {
+//                         url: "LOCKED",
+//                         publicId: null
+//                     },
+//                     pdf_content: lesson.pdf_content ? {
+//                         url: "LOCKED",
+//                         publicId: null
+//                     } : undefined
+//                 };
+//             });
+//         }
+//     }
+
+//     res.status(200).json({ 
+//         status: "success", 
+//         isPurchased: isAuthorized, 
+//         course: courseToSend 
+//     });
+// });
+// 3. Get Course Details (Lock/Unlock logic)
 const GetCourse = asynchandler(async (req, res) => {
     const course = await Course.findById(req.params.id).populate('teacher_id');
     if (!course) {
@@ -128,13 +193,17 @@ const GetCourse = asynchandler(async (req, res) => {
             const decoded = jwt.verify(token, process.env.JWT_KEY);
             userId = decoded.id || decoded._id; 
             userRole = decoded.role;
-        } catch (error) {}
+        } catch (error) {
+            console.error("JWT Verification error:", error.message);
+        }
     }
     
     if (userId) {
         const isAdmin = userRole === 'admin';
-        const isOwner = course.teacher_id && course.teacher_id._id && 
-                        course.teacher_id._id.toString() === userId.toString();
+        
+        // 🔧 التعديل هنا: المقارنة مع userId التابع للـ teacher وليس _id الخاص بمستند Teacher
+        const teacherUserId = course.teacher_id?.userId || course.teacher_id?._id;
+        const isOwner = teacherUserId && teacherUserId.toString() === userId.toString();
 
         if (isAdmin || isOwner) {
             isAuthorized = true; 
@@ -147,6 +216,8 @@ const GetCourse = asynchandler(async (req, res) => {
     }
 
     let courseToSend = course.toObject();
+    
+    // إخفاء الروابط فقط إذا لم يكن مستخدم موثق أو صاحب كورس أو مشترك
     if (!isAuthorized) {
         if (courseToSend.lessons && courseToSend.lessons.length > 0) {
             courseToSend.lessons = courseToSend.lessons.map(lesson => {
@@ -264,7 +335,8 @@ const DeleteCourse = asynchandler(async (req, res) => {
     }
     
     const reqUserId = req.user.id || req.user._id;
-    const isOwner = course.teacher_id.toString() === reqUserId.toString();
+    const teacher = await Teacher.findOne({ userId: req.user.id });
+    const isOwner = course.teacher_id.toString() === teacher.id;
     const isAdmin = req.user.role === 'admin';
 
     if (isOwner || isAdmin) {
@@ -307,7 +379,7 @@ const PurchaseCourse = asynchandler(async (req, res) => {
     const purchaserId = req.user.id || req.user._id; 
     const purchaserRole = req.user.role;
     const courseId = req.params.courseId;
-    let finalStudentId = purchaserId;
+    let finalStudentId;
 
 
     if (purchaserRole === 'parent') {
@@ -341,7 +413,8 @@ const PurchaseCourse = asynchandler(async (req, res) => {
         return res.status(400).json({ message: "This course is not available for purchase" });
     }
 
-    const alreadyEnrolled = await Enrollment.findOne({ student_id: finalStudentId, course_id: courseId });
+     const studant = await Student.findOne({ userId: req.user.id });
+    const alreadyEnrolled = await Enrollment.findOne({ student_id: finalStudentId || studant.id, course_id: courseId });
     if (alreadyEnrolled) {
         return res.status(400).json({ message: "هذا الطالب يمتلك الكورس مسبقاً" });
     }
@@ -350,23 +423,32 @@ const PurchaseCourse = asynchandler(async (req, res) => {
     const teacherEarnings = course.price - platformFee;
 
     const transaction = await Transaction.create({
-        student_id: finalStudentId, 
+        student_id: studant.id, 
         course_id: course._id,
         amount: course.price,     
         platform_fee: platformFee,
         instructor_earnings: teacherEarnings,
         payment_status: 'completed'
     });
-
+    const teacher = await Teacher.findById(course.teacher_id)
+    if(!teacher){
+          return res.status(404).json({ message: "teacher not found" });
+    }
+    studant.enrolled_courses_count++;
+    studant.save();
 
     const enrollment = await Enrollment.create({
-        student_id: finalStudentId, 
+        student_id: studant.id, 
+        userId: req.user.id,
+        teacher_id: course.teacher_id,
         course_id: course._id,
         progress_percentage: 0,
         completion_status: 'in_progress',
         certificate_issued: false
     });
-    
+
+    teacher.total_student++;
+    teacher.save()
     res.status(201).json({ 
         status: "success", 
         message: "Course purchased successfully", 

@@ -5,6 +5,8 @@ const { verifytoken } = require('../middlware/VerifyTokens');
 // Get All Teachers
 router.get('/', GetTeachers)
 
+router.get('/myprofile', verifytoken, GetMyProfile)
+
 // Get Single Teacher
 router.get('/:id', GetTeacher)
 
@@ -13,7 +15,7 @@ router.post('/newteacher', CreateTeacher)
 
 
 // Get Single Teacher
-router.get('/myprofile', verifytoken, GetMyProfile)
+
 
 
 // Get Single Teacher

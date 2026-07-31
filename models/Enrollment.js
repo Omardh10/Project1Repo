@@ -6,6 +6,16 @@ const EnrollmentSchema = new mongoose.Schema({
         ref: 'Student',
         required: true
     },
+     userId:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    teacher_id:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Teacher',
+        required: true
+    },
     course_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Course',
@@ -17,7 +27,7 @@ const EnrollmentSchema = new mongoose.Schema({
     },
     completion_status: {
         type: String,
-        enum: ['not started', 'in progress', 'completed'],
+        enum: ['not started', 'in_progress', 'completed'],
         default: 'not started'
     },
     certificate_issued: {

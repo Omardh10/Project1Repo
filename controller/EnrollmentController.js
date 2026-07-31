@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { validatecreateenrollment, validateupdateenrollment, Enrollment } = require("../models/Enrollment");
 const { Course } = require("../models/Course");
-
+const {Teacher} = require('../models/Teacher')
 
 const CreateEnrollment = asynchandler(async (req, res) => {
     const { error } = validatecreateenrollment(req.body);
@@ -58,7 +58,18 @@ const UpdateEnrollment = asynchandler(async (req, res) => {
 })
 
 const GetEnrollments = asynchandler(async (req, res) => {
-    const enrollments = await Enrollment.find();
+    const enrollments = await Enrollment.find().populate('student_id', '-password -token').populate('course_id');
+    res.status(200).json({ status: "success", enrollments });
+    if (req.user.role == "teacher" || req.user.role == "admin") {
+        res.status(200).json({ status: "success", enrollments });
+    } else {
+        res.status(403).json({ message: "Unauthorized Do it" });
+    }
+})
+const GetEnrollmentsTeacher = asynchandler(async (req, res) => {
+    const teacher = await Teacher.findOne({userId: req.user.id})
+    const enrollments = await Enrollment.find({teacher_id: teacher.id }).populate('student_id').populate('userId').populate('course_id')
+   return res.status(200).json({ status: "success", enrollments });
     if (req.user.role == "teacher" || req.user.role == "admin") {
         res.status(200).json({ status: "success", enrollments });
     } else {
@@ -134,5 +145,6 @@ module.exports = {
     UpdateEnrollment,
     GetEnrollments,
     DeleteEnrollment,
-    CompleteLesson
+    CompleteLesson,
+    GetEnrollmentsTeacher
 }

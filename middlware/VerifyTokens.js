@@ -19,7 +19,7 @@ const verifytoken = (req, res, next) => {
 }
 const verifytokenandisAdmin = (req, res, next) => {
     verifytoken(req, res, () => {
-        if (req.user.role.admin) {
+        if (req.user.role=="admin") {
             next();
         } else {
             return res.status(500).json({ message: "you are not allowd you are not Admin ... " })
