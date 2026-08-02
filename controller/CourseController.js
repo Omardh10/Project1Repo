@@ -177,9 +177,10 @@ const PostCourseFiles = asynchandler(async (req, res) => {
 // });
 // 3. Get Course Details (Lock/Unlock logic)
 const GetCourse = asynchandler(async (req, res) => {
-    const course = await Course.findById(req.params.id).populate('teacher_id');
+
+    const course = await Course.findById(req.params.id).populate('category');
     if (!course) {
-        return res.status(404).json({ message: "course not found" });
+        return res.status(404).json({ message: "course not found" })
     }
 
     let isAuthorized = false;
@@ -224,6 +225,8 @@ const GetCourse = asynchandler(async (req, res) => {
                 return {
                     _id: lesson._id,
                     title: lesson.title,
+                    hasquiz: lesson.hasquiz,
+                    quiz: lesson.quiz ,
                     description: lesson.description,
                     contentType: lesson.contentType, 
                     video_content: {
@@ -246,15 +249,6 @@ const GetCourse = asynchandler(async (req, res) => {
     });
 });
 
-const GetMyCourses = asynchandler(async (req, res) => {
- 
-    const teacher = await Teacher.findOne({ userId: req.user.id });
-    const courses = await Course.find({ teacher_id: teacher.id }).populate('category');
-    console.log("Teacher ID:", teacher.id);
-    console.log("useer:" , req.user.id);
-    res.status(200).json({ status: "success", courses })
-
-})
 
 
 const UpdateCourse = asynchandler(async (req, res) => {
@@ -323,13 +317,25 @@ const PostImageCourse = asynchandler(async (req, res) => {
 
 
 const GetCourses = asynchandler(async (req, res) => {
-    const courses = await Course.find().select('-lessons');
-    res.status(200).json({ status: "success", courses });
-});
 
+    const courses = await Course.find();
+    res.status(200).json({ status: "success", courses })
+
+})
+
+const GetMyCourses = asynchandler(async (req, res) => {
+ 
+    const teacher = await Teacher.findOne({ userId: req.user.id });
+    const courses = await Course.find({ teacher_id: teacher.id }).populate('category');
+    console.log("Teacher ID:", teacher.id);
+    console.log("useer:" , req.user.id);
+    res.status(200).json({ status: "success", courses })
+
+})
 
 const DeleteCourse = asynchandler(async (req, res) => {
-    let course = await Course.findById(req.params.id);
+
+    let course = await Course.findById(req.params.id)
     if (!course) {
         return res.status(404).json({ message: "course not found" });
     }
@@ -456,6 +462,7 @@ const PurchaseCourse = asynchandler(async (req, res) => {
         enrollmentData: enrollment
     });
 });
+
 
 module.exports = {
     CreateCourse,

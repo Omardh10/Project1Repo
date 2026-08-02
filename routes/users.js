@@ -17,7 +17,7 @@ router.post('/auth/register', RegisterUser)
 router.post('/auth/login', LoginUser)
 
 // Update User
-router.patch('/profile/:id', verifytokenandonlyuser, UpdateUser)
+router.put('/profile/:id', verifytokenandonlyuser, UpdateUser)
 
 // Delete User
 router.delete('/profile/:id', verifytokenandauthorization, DeleteUser)

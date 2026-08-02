@@ -38,6 +38,8 @@ router.delete('/:id', verifytoken, DeleteCourse)
 // purchase Course
 router.post('/purchasecourse/:courseId', verifytoken, PurchaseCourse)
 
+
+
 // complete lesson
 router.patch('/complete-lesson', verifytoken, CompleteLesson);
 
