@@ -5,6 +5,9 @@ const fs = require('fs');
 const path = require('path');
 const { validatecreateteacher, validateupdateteacher,Teacher } = require("../models/Teacher");
 const { Following } = require("../models/Following");
+const { Admin } = require("../models/Admin");
+const { Course } = require("../models/Course");
+const {Enrollment}=  require('../models/Enrollment')
 
 
 const CreateTeacher = asynchandler(async (req, res) => {
@@ -205,5 +208,6 @@ module.exports = {
      GetTeacherByUserId,
     GetMyProfile,
     GetTeachersPercentage,
-    createquiz
+    createquiz,
+    getStudentDetailsForTeacher
 }
