@@ -1,12 +1,18 @@
 const express = require('express');
-const { GetTeachers, GetTeacher, CreateTeacher, UpdateTeacher, DeleteTeacher, FollowTeacher } = require('../controller/TeacherController');
+const { GetTeachers,GetTeacherByUserId, GetMyProfile,GetTeacher, CreateTeacher, UpdateTeacher, DeleteTeacher, FollowTeacher } = require('../controller/TeacherController');
 const router = express.Router();
 const { verifytoken } = require('../middlware/VerifyTokens');
+const { get } = require('./users');
 // Get All Teachers
 router.get('/', GetTeachers)
 
 // Get Single Teacher
+router.get('/myprofile', verifytoken, GetMyProfile)
 router.get('/:id', GetTeacher)
+
+
+// Get Single Teacher
+router.get('/user/:id', GetTeacherByUserId)
 
 // Create New Teacher
 router.post('/newteacher', CreateTeacher)

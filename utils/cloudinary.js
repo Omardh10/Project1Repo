@@ -1,4 +1,67 @@
-const cloudinary = require('cloudinary');
+// const cloudinary = require('cloudinary');
+// const dotenv = require('dotenv');
+// dotenv.config();
+
+// cloudinary.config({
+//     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+//     api_key: process.env.CLOUDINARY_API_KEY,
+//     api_secret: process.env.CLOUDINARY_API_SECRET
+// })
+
+// const UploadFile = async (filetoupload) => {
+//     try {
+//         const data = await cloudinary.uploader.upload(filetoupload, { resource_type: 'auto' });
+//         return data;
+//     } catch (error) {
+//         return error;
+//     }
+// }
+
+// const RemoveImage = async (imagepublicid) => {
+//     try {
+//         const result = await cloudinary.uploader.destroy(imagepublicid);
+//         return result;
+//     } catch (error) {
+//         return error;
+//     }
+
+// }
+
+// const RemovePDF = async (publicId) => {
+//     try {
+//         const result = await cloudinary.uploader.destroy(publicId, { resource_type: 'raw' });
+//         return result;
+//     } catch (error) {
+//         return error;
+//     }
+// }
+
+// const RemoveVideo = async (publicId) => {
+//     try {
+//         const result = await cloudinary.uploader.destroy(publicId, { resource_type: 'video' });
+//         return result;
+//     } catch (error) {
+//         return error;
+//     }
+// }
+// // const RemoveImagemany = async (imagepublicides) => {
+// //     try {
+// //         const result = await cloudinary.v2.api.delete_resources(imagepublicides);
+// //         return result;
+// //     } catch (error) {
+// //         return error;
+// //     }
+
+// // }
+// module.exports = {
+//     UploadFile,
+//     RemoveImage,
+//     RemovePDF,
+//     RemoveVideo
+// }
+
+
+const cloudinary = require('cloudinary').v2; // يفضل استخدام .v2 دائماً
 const dotenv = require('dotenv');
 dotenv.config();
 
@@ -6,57 +69,50 @@ cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET
-})
+});
 
-const UploadFile = async (filetoupload) => {
+const UploadFile = async (filetoupload, resourceType = 'auto') => {
     try {
-        const data = await cloudinary.uploader.upload(filetoupload, { resource_type: 'auto' });
+        const data = await cloudinary.uploader.upload(filetoupload, { 
+            resource_type: resourceType 
+        });
         return data;
     } catch (error) {
-        return error;
+        console.error("Cloudinary Upload Error Details:", error);
+        throw error; // 👈 مهم جداً: رمي الخطأ ليتعامل معه الـ catch في الـ Controller
     }
-}
+};
 
 const RemoveImage = async (imagepublicid) => {
     try {
         const result = await cloudinary.uploader.destroy(imagepublicid);
         return result;
     } catch (error) {
-        return error;
+        throw error;
     }
-
-}
+};
 
 const RemovePDF = async (publicId) => {
     try {
         const result = await cloudinary.uploader.destroy(publicId, { resource_type: 'raw' });
         return result;
     } catch (error) {
-        return error;
+        throw error;
     }
-}
+};
 
 const RemoveVideo = async (publicId) => {
     try {
         const result = await cloudinary.uploader.destroy(publicId, { resource_type: 'video' });
         return result;
     } catch (error) {
-        return error;
+        throw error;
     }
-}
-// const RemoveImagemany = async (imagepublicides) => {
-//     try {
-//         const result = await cloudinary.v2.api.delete_resources(imagepublicides);
-//         return result;
-//     } catch (error) {
-//         return error;
-//     }
+};
 
-// }
 module.exports = {
     UploadFile,
     RemoveImage,
     RemovePDF,
     RemoveVideo
-}
-
+};
