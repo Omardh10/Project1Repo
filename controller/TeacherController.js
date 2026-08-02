@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { validatecreateteacher, validateupdateteacher,Teacher } = require("../models/Teacher");
 const { Following } = require("../models/Following");
+const {Enrollment}=  require('../models/Enrollment')
 
 
 const CreateTeacher = asynchandler(async (req, res) => {
@@ -41,6 +42,55 @@ const GetMyProfile = asynchandler(async (req, res) => {
     res.status(200).json({ status: "success", teacher });
 
 })
+
+const getStudentDetailsForTeacher = asynchandler(async (req, res) => {
+    const { userId } = req.params; // userId أو student_id الخاص بالطالب
+
+    const teacher = await Teacher.findOne({ userId: req.user.id });
+    if (!teacher) {
+        return res.status(404).json({ message: "حساب المعلم غير موجود" });
+    }
+
+    // جلب كافة اشتراكات هذا الطالب في كورسات هذا المعلم تحديداً
+    const enrollments = await Enrollment.find({ 
+        userId: userId, 
+        teacher_id: teacher._id 
+    })
+    .populate('course_id', 'title image duration lessons price category')
+    .populate('userId', 'fullname email profilephoto Gender birthdate');
+
+    if (!enrollments || enrollments.length === 0) {
+        return res.status(404).json({ message: "لم يتم العثور على بيانات هذا الطالب مع هذا المعلم" });
+    }
+
+    const studentInfo = enrollments[0].userId;
+
+    const coursesData = enrollments.map(e => ({
+        enrollmentId: e._id,
+        courseId: e.course_id?._id,
+        courseTitle: e.course_id?.title || 'كورس غير متاح',
+        courseImage: e.course_id?.image?.url || '',
+        totalLessons: e.course_id?.lessons?.length || 0,
+        completedLessonsCount: e.completed_lessons?.length || 0,
+        progress: e.progress || 0,
+        completionStatus: e.completion_status,
+        enrolledAt: e.createdAt
+    }));
+
+    res.status(200).json({
+        status: "success",
+        student: {
+            id: studentInfo._id,
+            fullname: studentInfo.fullname,
+            email: studentInfo.email,
+            profilephoto: studentInfo.profilephoto,
+            gender: studentInfo.Gender
+        },
+        courses: coursesData,
+        // مساحة مخصصة للاختبارات سيتم ربطها لاحقاً
+        quizzes: []
+    });
+});
 
 const GetTeacherByUserId = asynchandler(async (req, res) => {
     const teacher = await Teacher.findOne({ userId: req.params.id });
@@ -133,5 +183,6 @@ module.exports = {
     DeleteTeacher,
     FollowTeacher,
      GetTeacherByUserId,
-    GetMyProfile
+    GetMyProfile,
+    getStudentDetailsForTeacher
 }
