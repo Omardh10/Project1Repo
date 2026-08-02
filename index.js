@@ -17,6 +17,7 @@ const teacherroute = require('./routes/teachers');
 const transctionroute = require('./routes/transctions');
 const stdanswerroute = require('./routes/stdanswer');
 const modelcourseroute = require('./routes/modelcourses');
+const admin = require('./routes/admin')
 require("dotenv").config();
 const app = express();
 const server = http.createServer(app);
@@ -29,8 +30,9 @@ ConnectToDb();
 
 
 app.use('/api/users', userroute)
-app.use('/api/categories', require('./routes/catogary'))
+app.use('/api/admin', admin)
 app.use('/api/courses', courseroute)
+app.use('/api/categories', require('./routes/catogary'))
 app.use('/api/courseviewlogs', courseviewlogroute)
 app.use('/api/enrollments', enrollmentroute)
 app.use('/api/exams', examroute)

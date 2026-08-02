@@ -4,8 +4,10 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
 const { validatupdatecourse, Course, validatecreatecourse } = require("../models/Course");
-const { UploadFile } = require("../utils/cloudinary");
-const { RemoveImage } = require("../utils/cloudinary");
+const { UploadFile, RemoveImage } = require("../utils/cloudinary"); // تأكد من استيراد RemoveImage
+const { Enrollment } = require("../models/Enrollment");
+const { Transaction } = require("../models/Transaction");
+const { Student } = require('../models/Student')
 const { validatecreateteacher, validateupdateteacher , Teacher} = require("../models/Teacher");
 
 const CreateCourse = asynchandler(async (req, res) => {
@@ -26,49 +28,7 @@ const CreateCourse = asynchandler(async (req, res) => {
   
     res.status(201).json({ status: "success", course: NewCourse });
 })
-const PostImageCourse = asynchandler(async (req, res) => {
-        if (!req.file) {
-        return res.status(400).json({ message: "no image provided" });
-    }
 
-    const pathimg = path.join(__dirname, `../images/${req.file.filename}`);
-    
-    // التحقق من وجود الكورس أولاً قبل رفع الصورة لسيرفر السحاب (Optimization)
-    const course = await Course.findById(req.params.id);
-    if (!course) {
-        if (fs.existsSync(pathimg)) fs.unlinkSync(pathimg);
-        return res.status(404).json({ message: "Course not found" });
-    }
-       
-  
-
-    const reqUserId = req.user.id || req.user._id;
- const t = await Teacher.findOne({ userId: reqUserId });
- 
-    if (course.teacher_id.toString() == t._id.toString()) {
-        const result = await UploadFile(pathimg);
-
-        if (course.image && course.image.publicId) {
-            await RemoveImage(course.image.publicId);
-        }
-
-        course.image = {
-            url: result.secure_url,
-            publicId: result.public_id
-        };
-
-        await course.save();
-        if (fs.existsSync(pathimg)) fs.unlinkSync(pathimg);
-        
-        return res.status(200).json({ 
-            message: "Image uploaded successfully", 
-            courseImage: { url: result.secure_url, publicId: result.public_id } 
-        });
-    } else {
-        if (fs.existsSync(pathimg)) fs.unlinkSync(pathimg); 
-        return res.status(403).json({ message: "You are not authorized to upload image for this course" });
-    }
-});
 const PostCourseFiles = asynchandler(async (req, res) => {
     const videoFile = req.files?.['video']?.[0];
     const pdfFile = req.files?.['pdf']?.[0];
@@ -150,15 +110,154 @@ const PostCourseFiles = asynchandler(async (req, res) => {
         });
     }
 });
+
+// 3. Get Course Details (Lock/Unlock logic)
+// const GetCourse = asynchandler(async (req, res) => {
+//     const course = await Course.findById(req.params.id).populate('teacher_id');
+//     if (!course) {
+//         return res.status(404).json({ message: "course not found" });
+//     }
+
+//     let isAuthorized = false;
+//     let userId = null;
+//     let userRole = null;
+//     const authtoken = req.headers.authorization;
+    
+//     if (authtoken) {
+//         const token = authtoken.split(" ")[1];
+//         try {
+//             const decoded = jwt.verify(token, process.env.JWT_KEY);
+//             userId = decoded.id || decoded._id; 
+//             userRole = decoded.role;
+//         } catch (error) {}
+//     }
+    
+//     if (userId) {
+//         const isAdmin = userRole === 'admin';
+//         const isOwner = course.teacher_id && course.teacher_id._id && 
+//                         course.teacher_id._id.toString() === userId.toString();
+
+//         if (isAdmin || isOwner) {
+//             isAuthorized = true; 
+//         } else {
+//             const enrollment = await Enrollment.findOne({ student_id: userId, course_id: course._id });
+//             if (enrollment) {
+//                 isAuthorized = true;
+//             }
+//         }
+//     }
+
+//     let courseToSend = course.toObject();
+//     if (!isAuthorized) {
+//         if (courseToSend.lessons && courseToSend.lessons.length > 0) {
+//             courseToSend.lessons = courseToSend.lessons.map(lesson => {
+//                 return {
+//                     _id: lesson._id,
+//                     title: lesson.title,
+//                     description: lesson.description,
+//                     contentType: lesson.contentType, 
+//                     video_content: {
+//                         url: "LOCKED",
+//                         publicId: null
+//                     },
+//                     pdf_content: lesson.pdf_content ? {
+//                         url: "LOCKED",
+//                         publicId: null
+//                     } : undefined
+//                 };
+//             });
+//         }
+//     }
+
+//     res.status(200).json({ 
+//         status: "success", 
+//         isPurchased: isAuthorized, 
+//         course: courseToSend 
+//     });
+// });
+// 3. Get Course Details (Lock/Unlock logic)
 const GetCourse = asynchandler(async (req, res) => {
 
     const course = await Course.findById(req.params.id).populate('category');
     if (!course) {
         return res.status(404).json({ message: "course not found" })
     }
-    res.status(201).json({ status: "success", course })
+
+    let isAuthorized = false;
+    let userId = null;
+    let userRole = null;
+    const authtoken = req.headers.authorization;
+    
+    if (authtoken) {
+        const token = authtoken.split(" ")[1];
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_KEY);
+            userId = decoded.id || decoded._id; 
+            userRole = decoded.role;
+        } catch (error) {
+            console.error("JWT Verification error:", error.message);
+        }
+    }
+    
+    if (userId) {
+        const isAdmin = userRole === 'admin';
+        
+        // 🔧 التعديل هنا: المقارنة مع userId التابع للـ teacher وليس _id الخاص بمستند Teacher
+        const teacherUserId = course.teacher_id?.userId || course.teacher_id?._id;
+        const isOwner = teacherUserId && teacherUserId.toString() === userId.toString();
+
+        if (isAdmin || isOwner) {
+            isAuthorized = true; 
+        } else {
+            const enrollment = await Enrollment.findOne({ student_id: userId, course_id: course._id });
+            if (enrollment) {
+                isAuthorized = true;
+            }
+        }
+    }
+
+    let courseToSend = course.toObject();
+    
+    // إخفاء الروابط فقط إذا لم يكن مستخدم موثق أو صاحب كورس أو مشترك
+    if (!isAuthorized) {
+        if (courseToSend.lessons && courseToSend.lessons.length > 0) {
+            courseToSend.lessons = courseToSend.lessons.map(lesson => {
+                return {
+                    _id: lesson._id,
+                    title: lesson.title,
+                    description: lesson.description,
+                    contentType: lesson.contentType, 
+                    video_content: {
+                        url: "LOCKED",
+                        publicId: null
+                    },
+                    pdf_content: lesson.pdf_content ? {
+                        url: "LOCKED",
+                        publicId: null
+                    } : undefined
+                };
+            });
+        }
+    }
+
+    res.status(200).json({ 
+        status: "success", 
+        isPurchased: isAuthorized, 
+        course: courseToSend 
+    });
+});
+
+const GetMyCourses = asynchandler(async (req, res) => {
+ 
+    const teacher = await Teacher.findOne({ userId: req.user.id });
+    const courses = await Course.find({ teacher_id: teacher.id }).populate('category');
+    console.log("Teacher ID:", teacher.id);
+    console.log("useer:" , req.user.id);
+    res.status(200).json({ status: "success", courses })
 
 })
+
+
 const UpdateCourse = asynchandler(async (req, res) => {
     // 1. التحقق من البيانات المرسلة
     const { error } = validatupdatecourse(req.body);
@@ -179,6 +278,50 @@ const UpdateCourse = asynchandler(async (req, res) => {
 
     return res.status(200).json({ status: "success", course: course });
 });
+const PostImageCourse = asynchandler(async (req, res) => {
+        if (!req.file) {
+        return res.status(400).json({ message: "no image provided" });
+    }
+
+    const pathimg = path.join(__dirname, `../images/${req.file.filename}`);
+    
+    // التحقق من وجود الكورس أولاً قبل رفع الصورة لسيرفر السحاب (Optimization)
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+        if (fs.existsSync(pathimg)) fs.unlinkSync(pathimg);
+        return res.status(404).json({ message: "Course not found" });
+    }
+       
+  
+
+    const reqUserId = req.user.id || req.user._id;
+ const t = await Teacher.findOne({ userId: reqUserId });
+ 
+    if (course.teacher_id.toString() == t._id.toString()) {
+        const result = await UploadFile(pathimg);
+
+        if (course.image && course.image.publicId) {
+            await RemoveImage(course.image.publicId);
+        }
+
+        course.image = {
+            url: result.secure_url,
+            publicId: result.public_id
+        };
+
+        await course.save();
+        if (fs.existsSync(pathimg)) fs.unlinkSync(pathimg);
+        
+        return res.status(200).json({ 
+            message: "Image uploaded successfully", 
+            courseImage: { url: result.secure_url, publicId: result.public_id } 
+        });
+    } else {
+        if (fs.existsSync(pathimg)) fs.unlinkSync(pathimg); 
+        return res.status(403).json({ message: "You are not authorized to upload image for this course" });
+    }
+});
+
 
 const GetCourses = asynchandler(async (req, res) => {
 
@@ -201,13 +344,21 @@ const DeleteCourse = asynchandler(async (req, res) => {
 
     let course = await Course.findById(req.params.id)
     if (!course) {
-        return res.status(404).json({ message: "course not found" })
+        return res.status(404).json({ message: "course not found" });
     }
-    await Course.findByIdAndDelete(req.params.id)
+    
+    const reqUserId = req.user.id || req.user._id;
+    const teacher = await Teacher.findOne({ userId: req.user.id });
+    const isOwner = course.teacher_id.toString() === teacher.id;
+    const isAdmin = req.user.role === 'admin';
 
-    res.status(201).json({ status: "success", message: "course deleted seccussfully" })
-
-})
+    if (isOwner || isAdmin) {
+        await Course.deleteOne({ _id: req.params.id });
+        res.status(200).json({ status: "success", message: "course deleted successfully" });
+    } else {
+        return res.status(403).json({ message: "you are not authorized to delete this course" });
+    }
+});
 
 const FilterCourses = asynchandler(async (req, res) => {
     const { keyword, category } = req.query; 
@@ -241,7 +392,7 @@ const PurchaseCourse = asynchandler(async (req, res) => {
     const purchaserId = req.user.id || req.user._id; 
     const purchaserRole = req.user.role;
     const courseId = req.params.courseId;
-    let finalStudentId = purchaserId;
+    let finalStudentId;
 
 
     if (purchaserRole === 'parent') {
@@ -275,7 +426,8 @@ const PurchaseCourse = asynchandler(async (req, res) => {
         return res.status(400).json({ message: "This course is not available for purchase" });
     }
 
-    const alreadyEnrolled = await Enrollment.findOne({ student_id: finalStudentId, course_id: courseId });
+     const studant = await Student.findOne({ userId: req.user.id });
+    const alreadyEnrolled = await Enrollment.findOne({ student_id: finalStudentId || studant.id, course_id: courseId });
     if (alreadyEnrolled) {
         return res.status(400).json({ message: "هذا الطالب يمتلك الكورس مسبقاً" });
     }
@@ -284,23 +436,32 @@ const PurchaseCourse = asynchandler(async (req, res) => {
     const teacherEarnings = course.price - platformFee;
 
     const transaction = await Transaction.create({
-        student_id: finalStudentId, 
+        student_id: studant.id, 
         course_id: course._id,
         amount: course.price,     
         platform_fee: platformFee,
         instructor_earnings: teacherEarnings,
         payment_status: 'completed'
     });
-
+    const teacher = await Teacher.findById(course.teacher_id)
+    if(!teacher){
+          return res.status(404).json({ message: "teacher not found" });
+    }
+    studant.enrolled_courses_count++;
+    studant.save();
 
     const enrollment = await Enrollment.create({
-        student_id: finalStudentId, 
+        student_id: studant.id, 
+        userId: req.user.id,
+        teacher_id: course.teacher_id,
         course_id: course._id,
         progress_percentage: 0,
         completion_status: 'in_progress',
         certificate_issued: false
     });
-    
+
+    teacher.total_student++;
+    teacher.save()
     res.status(201).json({ 
         status: "success", 
         message: "Course purchased successfully", 
@@ -318,6 +479,7 @@ module.exports = {
     GetCourses,
     DeleteCourse,
     PostImageCourse,
+    PurchaseCourse,
+    FilterCourses,
     GetMyCourses
-    
-}
+};

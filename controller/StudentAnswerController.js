@@ -8,16 +8,23 @@ const path = require('path');
 const CreateStudentAnswer = asynchandler(async (req, res) => {
     const { error } = validatecreatestudentanswer(req.body);
     if (error) {
-        return res.status(403).json({ message: error.details[0].message })
+        return res.status(400).json({ message: error.details[0].message });
     }
-    const NewStudentAnswer = StudentAnswer.create({
+    const { Question } = require('../models/Question'); 
+    const question = await Question.findById(req.body.question_id);
+    if(!question) return res.status(404).json({ message: "Question not found" });
+
+    const isCorrect = (question.correct_answer === req.body.selected_option);
+
+    const NewStudentAnswer = await StudentAnswer.create({
         student_id: req.body.student_id,
         question_id: req.body.question_id,
-        answer: req.body.answer,
-    })
-    await NewStudentAnswer.save();
+        selected_option: req.body.selected_option,
+        is_correct: isCorrect 
+    });
+    
     res.status(201).json({ status: "success", studentAnswer: NewStudentAnswer });
-})
+});
 
 
 const GetStudentAnswer = asynchandler(async (req, res) => {

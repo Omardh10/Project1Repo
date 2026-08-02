@@ -173,6 +173,10 @@ const CourseSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+      duration: {
+        type: Number,
+        default: 0
+    },
     category: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Category',
@@ -218,13 +222,13 @@ const CourseSchema = new mongoose.Schema({
         video_content: {
             url: {
                 type: String,
-                default: "" // 👈 تم إزالة required لتجنب فشل حفظ دروس الـ PDF
+                default: null 
             },
             publicId: {
                 type: String,
-                default: null // 👈 تم إزالة required
+                required: true
             },
-            duration: { 
+               duration: { 
                 type: Number, 
                 default: 0 
             }
@@ -259,7 +263,6 @@ const CourseSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-// 🛠️ Hook يعمل تلقائياً عند حفظ الكورس ويجمع مدة دروس الفيديو فقط
 CourseSchema.pre('save', function() {
     if (this.lessons && this.lessons.length > 0) {
         this.duration = this.lessons.reduce((total, lesson) => {
@@ -277,7 +280,7 @@ const Course = mongoose.model('Course', CourseSchema);
 
 const validatecreatecourse = (obj) => {
     const schema = joi.object({
-        teacher_id: joi.string().required(),
+        teacher_id: joi.string(),
         title: joi.string().required(),
         description: joi.string().required(),
         category: joi.string().required(),
@@ -298,10 +301,9 @@ const validatupdatecourse = (obj) => {
         isfounder: joi.boolean(),
         founding_ratio: joi.number(),
         lessons: joi.array()
-
-    });
-    return schema.validate(obj);
-};
+    })
+    return schema.validate(obj)
+}
 
 module.exports = {
     Course,

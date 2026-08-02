@@ -1,10 +1,9 @@
 const express = require('express');
-const { GetCourses, GetCourse, CreateCourse,GetMyCourses, UpdateCourse, DeleteCourse, PostImageCourse, PurchaseCourse, PostCourseFiles, FilterCourses } = require('../controller/CourseController');
+const { GetCourses, GetCourse, CreateCourse, UpdateCourse,GetMyCourses, DeleteCourse, PostImageCourse, PurchaseCourse, PostCourseFiles, FilterCourses } = require('../controller/CourseController');
 const router = express.Router();
 const { verifytoken, verifytokenandisAdmin } = require('../middlware/VerifyTokens');
 const { CompleteLesson } = require('../controller/EnrollmentController');
-const { uploadLessonFiles } = require('../middlware/upload');
-const {uploadphoto} = require('../middlware/upload');
+const { uploadLessonFiles, uploadphoto } = require('../middlware/upload');
 const multer = require('multer');
 
 router.get('/Mycourses', verifytoken, GetMyCourses);
@@ -19,8 +18,6 @@ router.post('/newcourse', verifytoken, CreateCourse)
 
 // Upload Course Image
 router.post('/course/image/:id', verifytoken, uploadphoto.single('image'), PostImageCourse);
-
-
 
 router.post(
     '/add-lesson/:id',

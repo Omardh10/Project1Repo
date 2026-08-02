@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
-const { validatecreateteacher, validateupdateteacher , Teacher} = require("../models/Teacher");
+const { validatecreateteacher, validateupdateteacher,Teacher } = require("../models/Teacher");
 const { Following } = require("../models/Following");
 
 
@@ -32,6 +32,7 @@ const GetTeacher = asynchandler(async (req, res) => {
     res.status(200).json({ status: "success", teacher });
 
 })
+
 const GetMyProfile = asynchandler(async (req, res) => {
       const teacher = await Teacher.findOne({ userId: req.user.id });
     if (!teacher) {
@@ -49,6 +50,7 @@ const GetTeacherByUserId = asynchandler(async (req, res) => {
     res.status(200).json({ status: "success", teacher });
 
 })
+
 
 const UpdateTeacher = asynchandler(async (req, res) => {
     const { error } = validateupdateteacher(req.body);
@@ -130,6 +132,6 @@ module.exports = {
     GetTeachers,
     DeleteTeacher,
     FollowTeacher,
-    GetTeacherByUserId,
+     GetTeacherByUserId,
     GetMyProfile
 }

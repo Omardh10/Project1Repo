@@ -6,7 +6,7 @@ const TeacherSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
-    total_students: {
+    total_student: {
         type: Number,
         required: true
     },
@@ -25,7 +25,7 @@ const Teacher = mongoose.model('Teacher', TeacherSchema);
 const validatecreateteacher = (obj) => {
     const schema = joi.object({
         userId: joi.string().required(),
-        total_students: joi.number().required(),
+        total_student: joi.number().required(),
         total_courses: joi.number().required()
     })
     return schema.validate(obj)
@@ -34,7 +34,7 @@ const validatecreateteacher = (obj) => {
 const validateupdateteacher = (obj) => {
     const schema = joi.object({
         userId: joi.string(),
-        total_students: joi.number(),
+        total_student: joi.number(),
         total_courses: joi.number()
     })
     return schema.validate(obj)

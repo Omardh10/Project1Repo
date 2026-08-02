@@ -38,7 +38,7 @@ const Userschema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['user', 'admin', 'teacher', 'parent'],
+        enum: ['user', 'student', 'admin', 'teacher', 'parent'],
         default: 'user'
     },
     isAccount: {
@@ -69,7 +69,7 @@ const validatregister = (obj) => {
         password: joi.string().trim().min(6).required(),
         Gender: joi.string().required(),
         birthdate: joi.string().required(),
-        role: joi.string().valid('user', 'admin', 'teacher', 'parent')
+        role: joi.string().valid('user', 'student', 'admin', 'teacher', 'parent')
     })
     return schema.validate(obj)
 }
