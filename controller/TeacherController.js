@@ -5,6 +5,8 @@ const fs = require('fs');
 const path = require('path');
 const { validatecreateteacher, validateupdateteacher,Teacher } = require("../models/Teacher");
 const { Following } = require("../models/Following");
+const { Admin } = require("../models/Admin");
+const { Course } = require("../models/Course");
 
 
 const CreateTeacher = asynchandler(async (req, res) => {
@@ -41,6 +43,27 @@ const GetMyProfile = asynchandler(async (req, res) => {
     res.status(200).json({ status: "success", teacher });
 
 })
+
+const GetTeachersPercentage = asynchandler(async (req, res) => {
+   const admin = await Admin.find();
+   return res.status(200).json({ status: "success", platform_fee_precentage: admin[0].platform_fee_precentage });
+})
+
+
+const createquiz = asynchandler(async (req, res) => {
+    const {title, questions, options, correct_answers, lessonId} = req.body;
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+    }
+    if (course.lessons.id(lessonId).hasquiz) {
+        return res.status(400).json({ message: "Quiz already exists for this lesson" });
+    }
+    course.lessons.id(lessonId).quiz = { title, questions, options, correct_answers };
+    course.lessons.id(lessonId).hasquiz = true;
+    await course.save();
+   return res.status(201).json({ status: "success", quiz: course.lessons.id(lessonId).quiz });
+});
 
 const GetTeacherByUserId = asynchandler(async (req, res) => {
     const teacher = await Teacher.findOne({ userId: req.params.id });
@@ -133,5 +156,7 @@ module.exports = {
     DeleteTeacher,
     FollowTeacher,
      GetTeacherByUserId,
-    GetMyProfile
+    GetMyProfile,
+    GetTeachersPercentage,
+    createquiz
 }

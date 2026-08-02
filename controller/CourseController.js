@@ -225,6 +225,8 @@ const GetCourse = asynchandler(async (req, res) => {
                 return {
                     _id: lesson._id,
                     title: lesson.title,
+                    hasquiz: lesson.hasquiz,
+                    quiz: lesson.quiz ,
                     description: lesson.description,
                     contentType: lesson.contentType, 
                     video_content: {
@@ -247,15 +249,6 @@ const GetCourse = asynchandler(async (req, res) => {
     });
 });
 
-const GetMyCourses = asynchandler(async (req, res) => {
- 
-    const teacher = await Teacher.findOne({ userId: req.user.id });
-    const courses = await Course.find({ teacher_id: teacher.id }).populate('category');
-    console.log("Teacher ID:", teacher.id);
-    console.log("useer:" , req.user.id);
-    res.status(200).json({ status: "success", courses })
-
-})
 
 
 const UpdateCourse = asynchandler(async (req, res) => {

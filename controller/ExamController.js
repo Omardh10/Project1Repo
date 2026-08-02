@@ -13,12 +13,15 @@ const CreateExam = asynchandler(async (req, res) => {
     if (error) {
         return res.status(403).json({ message: error.details[0].message })
     }
+    const existingExam = await Exam.findOne({  course_id: req.body.course_id });
+    if (existingExam) {
+        return res.status(400).json({ message: "Exam already exists for this course" });
+    }
     const NewExam = Exam.create({
         course_id: req.body.course_id,
         title: req.body.title,
         passing_score: req.body.passing_score,
     })
-    await NewExam.save();
     res.status(201).json({ status: "success", exam: NewExam });
 })
 

@@ -36,7 +36,7 @@ router.patch('/:id', verifytoken, UpdateCourse)
 router.delete('/:id', verifytoken, DeleteCourse)
 
 // purchase Course
-// router.post('/purchasecourse/:courseId', verifytoken, PurchaseCourse)
+router.post('/purchasecourse/:courseId', verifytoken, PurchaseCourse)
 
 
 
@@ -44,7 +44,7 @@ router.delete('/:id', verifytoken, DeleteCourse)
 router.patch('/complete-lesson', verifytoken, CompleteLesson);
 
 // search course
-// router.get('/search', FilterCourses);
+router.get('/search', FilterCourses);
 
 
 module.exports = router;

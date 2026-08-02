@@ -192,6 +192,30 @@ const CourseSchema = new mongoose.Schema({
         default: 0
     },
     lessons: [{
+        hasquiz: {
+            type: Boolean,
+            default: false
+        },
+        quiz: {
+            title: {
+                type: String,
+                default: ""
+            },
+            questions: [{
+                question_text: {
+                    type: String,
+                    required: true,
+                },
+                options: {
+                    type: [String],
+                    required: true,
+                },
+                correct_answer: {
+                    type: String,
+                    required: true,
+                }
+            }]
+        },
         title: {
             type: String,
             required: true
