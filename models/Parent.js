@@ -5,6 +5,10 @@ const ParentSchema = new mongoose.Schema({
             type:mongoose.Schema.Types.ObjectId,
             ref:'User',
             required:true
+        },
+        money_balance:{
+            type:Number,
+            default:0
         }
 },{timestamps:true});
 const Parent = mongoose.model('Parent', ParentSchema);

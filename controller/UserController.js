@@ -13,12 +13,12 @@ const RegisterUser = asynchandler(async (req, res) => {
 
     const { error } = validatregister(req.body);
     if (error) {
-        return res.status(400).json({ message: error.details[0].message }); 
+        return res.status(400).json({ message: error.details[0].message });
     }
 
     const olduser = await User.findOne({ email: email });
     if (olduser) {
-        return res.status(400).json({ message: "this user already registered" }); 
+        return res.status(400).json({ message: "this user already registered" });
     }
 
     // if ((role === 'student' || role === 'teacher') && (!req.user || req.user.role !== 'admin')) {
@@ -36,12 +36,13 @@ const RegisterUser = asynchandler(async (req, res) => {
         role
     });
 
-    await newuser.save(); 
+    await newuser.save();
 
     if (role === 'student') {
         await Student.create({
             userId: newuser._id,
             points_balance: 0,
+            money_balance: 0,
             enrolled_courses_count: 0
         });
     } else if (role === 'teacher') {
@@ -81,25 +82,25 @@ const LoginUser = asynchandler(async (req, res) => {
 
     if (user.role === 'teacher') {
 
-    const teacherData = await Teacher.findOne({ userId: user._id });
+        const teacherData = await Teacher.findOne({ userId: user._id });
 
-    if (!teacherData) {
-        return res.status(404).json({ message: "بيانات المدرس غير موجودة" });
-    }
+        if (!teacherData) {
+            return res.status(404).json({ message: "بيانات المدرس غير موجودة" });
+        }
 
-    if (teacherData.stetus === 'pending') {
-        return res.status(403).json({ message: "حسابك كمعلم بانتظار موافقة الإدارة." });
+        if (teacherData.stetus === 'pending') {
+            return res.status(403).json({ message: "حسابك كمعلم بانتظار موافقة الإدارة." });
+        }
+
+        if (teacherData.stetus === 'rejected') {
+            return res.status(403).json({ message: "عذراً، تم رفض طلب انضمامك كمعلم." });
+        }
     }
-    
-    if (teacherData.stetus === 'rejected') {
-        return res.status(403).json({ message: "عذراً، تم رفض طلب انضمامك كمعلم." });
-    }
-}
 
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_KEY);
 
     res.status(200).json({
-  user: user,
+        user: user,
         token: token
     });
 });

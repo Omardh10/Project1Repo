@@ -3,7 +3,7 @@ const { GetExams, GetExam, CreateExam, UpdateExam, DeleteExam } = require('../co
 const { GetParents, GetParent, CreateParent, UpdateParent, DeleteParent } = require('../controller/ParentController');
 const { DeleteReport, UpdateReport, CreateReport, GetReport, GetReports } = require('../controller/ReportController');
 const { GetReviews, GetReview, CreateReview, UpdateReview, DeleteReview } = require('../controller/ReviewController');
-const { GetStudents, GetStudent, CreateStudent, UpdateStudent, DeleteStudent, GetStudentByUserId } = require('../controller/StudentController');
+const { GetStudents, GetStudent, CreateStudent, UpdateStudent, DeleteStudent, GetStudentByUserId, ChargeStudentBalance } = require('../controller/StudentController');
 const { verifytoken } = require('../middlware/VerifyTokens');
 const router = express.Router();
 
@@ -16,6 +16,8 @@ router.get('/:id', GetStudent)
 router.get('/user/:userId', GetStudentByUserId)
 // Create New Student
 router.post('/newstudent', CreateStudent)
+
+router.post('/chargebalance',verifytoken, ChargeStudentBalance)
 
 // Update Student
 router.patch('/:id',verifytoken, UpdateStudent)

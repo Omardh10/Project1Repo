@@ -84,7 +84,7 @@
 //         type: Number,
 //         default: 0
 //     },
-  
+
 //     isfounder: {
 //         type: Boolean,
 //         default: false
@@ -165,8 +165,8 @@ const CourseSchema = new mongoose.Schema({
         ref: 'Teacher',
         required: true
     },
-    userId:{
-         type: mongoose.Schema.Types.ObjectId,
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
     },
@@ -178,7 +178,7 @@ const CourseSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-      duration: {
+    duration: {
         type: Number,
         default: 0
     },
@@ -229,6 +229,11 @@ const CourseSchema = new mongoose.Schema({
             type: String,
             required: true
         },
+        Comments: [{
+            text: { type: String },
+            userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+            Rating: { type: Number, min: 1, max: 5 },
+        }],
         description: {
             type: String,
             required: true
@@ -251,15 +256,15 @@ const CourseSchema = new mongoose.Schema({
         video_content: {
             url: {
                 type: String,
-                default: null 
+                default: null
             },
             publicId: {
                 type: String,
                 required: true
             },
-               duration: { 
-                type: Number, 
-                default: 0 
+            duration: {
+                type: Number,
+                default: 0
             }
         }
     }],
@@ -286,13 +291,14 @@ const CourseSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+
     approval_date: {
         type: Date,
         default: Date.now
     }
 }, { timestamps: true });
 
-CourseSchema.pre('save', function() {
+CourseSchema.pre('save', function () {
     if (this.lessons && this.lessons.length > 0) {
         this.duration = this.lessons.reduce((total, lesson) => {
             if (lesson.contentType === 'video' && lesson.video_content?.duration) {
@@ -310,7 +316,7 @@ const Course = mongoose.model('Course', CourseSchema);
 const validatecreatecourse = (obj) => {
     const schema = joi.object({
         teacher_id: joi.string(),
-          userId: joi.string(),
+        userId: joi.string(),
         title: joi.string().required(),
         description: joi.string().required(),
         category: joi.string().required(),

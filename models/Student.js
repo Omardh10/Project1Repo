@@ -6,6 +6,11 @@ const StudentSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
+    money_balance: {
+        type: Number,
+        default: 0,
+        required: true
+    },
     points_balance: {
         type: Number,
         required: true
@@ -21,6 +26,7 @@ const validatecreatestudent = (obj) => {
     const schema = joi.object({
         userId: joi.string().required(),
         points_balance: joi.number().required(),
+        money_balance: joi.required(),
         enrolled_courses_count: joi.number().required()
     })
     return schema.validate(obj)
@@ -30,6 +36,7 @@ const validateupdatestudent = (obj) => {
     const schema = joi.object({
         userId: joi.string(),
         points_balance: joi.number(),
+        money_balance: joi(),
         enrolled_courses_count: joi.number()    
     })
     return schema.validate(obj)

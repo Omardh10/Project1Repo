@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
 const { validateupdatestudent, validatecreatestudent, Student } = require("../models/Student");
-const {User} = require("../models/User");
+const { User } = require("../models/User");
 
 const CreateStudent = asynchandler(async (req, res) => {
 
@@ -64,9 +64,30 @@ const UpdateStudent = asynchandler(async (req, res) => {
     }
 });
 
+const ChargeStudentBalance = asynchandler(async (req, res) => {
+    let student = await Student.findOne({ userId: req.user.id });
+    if (!student) {
+        return res.status(404).json({ message: "Student not found" });
+    }
+
+    const currentBalance = Number(student.money_balance) || 0;
+    
+    const amountToAdd = Number(req.body.amount) || 0;
+    if (amountToAdd < 0) {
+        return res.status(400).json({ message: "Invalid student balance" });
+    }
+
+    student.money_balance = currentBalance + amountToAdd;
+
+    await student.save();
+
+
+    return res.status(200).json({ status: "success", student });
+
+});
 const GetStudents = asynchandler(async (req, res) => {
 
-    const students = await User.find({role: 'student'})
+    const students = await User.find({ role: 'student' })
     return res.status(200).json({ status: "success", students })
 
 })
@@ -93,5 +114,6 @@ module.exports = {
     UpdateStudent,
     GetStudents,
     DeleteStudent,
-    GetStudentByUserId
+    GetStudentByUserId,
+    ChargeStudentBalance
 }

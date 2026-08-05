@@ -382,6 +382,31 @@ const FilterCourses = asynchandler(async (req, res) => {
     });
 });
 
+const addCommentTolesson = asynchandler(async (req, res) => {
+    const { courseId, lessonId } = req.params;
+    const { text, rating } = req.body;
+
+    if (!text || !rating) {
+        return res.status(400).json({ message: "Comment text and rating are required" });
+    }
+
+    const course = await Course.findById(courseId);
+    if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+    }
+
+    const newComment = {
+        text,
+        userId: req.user.id,
+        Rating: rating
+    };
+
+    course.lessons.id(lessonId).Comments.push(newComment);
+    await course.save();
+    
+    res.status(201).json({ status: "success", comment: newComment });
+}   );
+
 const PurchaseCourse = asynchandler(async (req, res) => {
     const purchaserId = req.user.id || req.user._id; 
     const purchaserRole = req.user.role;
@@ -425,7 +450,10 @@ const PurchaseCourse = asynchandler(async (req, res) => {
     if (alreadyEnrolled) {
         return res.status(400).json({ message: "هذا الطالب يمتلك الكورس مسبقاً" });
     }
-    const platformFeePercentage = 0.20; 
+    if(studant.money_balance < course.price){
+        return res.status(400).json({ message: "رصيدك غير كافي لشراء هذا الكورس" });
+    }
+        const platformFeePercentage = 0.20; 
     const platformFee = course.price * platformFeePercentage;
     const teacherEarnings = course.price - platformFee;
 
@@ -475,5 +503,6 @@ module.exports = {
     PostImageCourse,
     PurchaseCourse,
     FilterCourses,
-    GetMyCourses
+    GetMyCourses,
+    addCommentTolesson
 };
