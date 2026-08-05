@@ -20,7 +20,7 @@ const CreateEnrollment = asynchandler(async (req, res) => {
         certificate_issued: req.body.certificate_issued
     })
     await NewEnrollment.save();
-    res.status(201).json({ status: "success", enrollment: NewEnrollment });
+   return res.status(201).json({ status: "success", enrollment: NewEnrollment });
 })
 
 
@@ -29,7 +29,7 @@ const GetEnrollment = asynchandler(async (req, res) => {
     if (!enrollment) {
         return res.status(404).json({ message: "Enrollment not found" });
     }
-    res.status(200).json({ status: "success", enrollment });
+   return  res.status(200).json({ status: "success", enrollment });
 })
 
 const UpdateEnrollment = asynchandler(async (req, res) => {
@@ -51,19 +51,19 @@ const UpdateEnrollment = asynchandler(async (req, res) => {
                 certificate_issued: req.body.certificate_issued
             }
         }, { new: true });
-        res.status(200).json({ status: "success", enrollment });
+        return res.status(200).json({ status: "success", enrollment });
     } else {
-        res.status(403).json({ message: "Unauthorized Do it" });
+        return res.status(403).json({ message: "Unauthorized Do it" });
     }
 })
 
 const GetEnrollments = asynchandler(async (req, res) => {
     const enrollments = await Enrollment.find().populate('student_id', '-password -token').populate('course_id');
-    res.status(200).json({ status: "success", enrollments });
+    return res.status(200).json({ status: "success", enrollments });
     if (req.user.role == "teacher" || req.user.role == "admin") {
-        res.status(200).json({ status: "success", enrollments });
+        return res.status(200).json({ status: "success", enrollments });
     } else {
-        res.status(403).json({ message: "Unauthorized Do it" });
+        return res.status(403).json({ message: "Unauthorized Do it" });
     }
 })
 const GetEnrollmentsTeacher = asynchandler(async (req, res) => {
@@ -71,9 +71,9 @@ const GetEnrollmentsTeacher = asynchandler(async (req, res) => {
     const enrollments = await Enrollment.find({teacher_id: teacher.id }).populate('student_id').populate('userId').populate('course_id')
    return res.status(200).json({ status: "success", enrollments });
     if (req.user.role == "teacher" || req.user.role == "admin") {
-        res.status(200).json({ status: "success", enrollments });
+       return res.status(200).json({ status: "success", enrollments });
     } else {
-        res.status(403).json({ message: "Unauthorized Do it" });
+        return res.status(403).json({ message: "Unauthorized Do it" });
     }
 })
 
@@ -84,10 +84,10 @@ const DeleteEnrollment = asynchandler(async (req, res) => {
     }
     if (req.user.role == "teacher" || req.user.role == "admin") {
         await Enrollment.deleteOne({ _id: req.params.id });
-        res.status(200).json({ status: "success", message: "Enrollment deleted successfully" });
+        return res.status(200).json({ status: "success", message: "Enrollment deleted successfully" });
     }
     else {
-        res.status(403).json({ message: "Unauthorized Do it" });
+        return res.status(403).json({ message: "Unauthorized Do it" });
     }
 })
 

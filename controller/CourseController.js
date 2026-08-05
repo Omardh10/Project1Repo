@@ -20,6 +20,7 @@ const CreateCourse = asynchandler(async (req, res) => {
 
     const NewCourse =await Course.create({
         teacher_id,
+        userId: req.user.id,
         title,
         description,
         category,

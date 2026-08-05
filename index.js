@@ -47,20 +47,24 @@ app.use('/api/transctions', transctionroute)
 app.use('/api/studentanswers', stdanswerroute)
 app.use('/api/modelcourses', modelcourseroute)
 
+// 1. معالج الصفحات غير الموجودة (404)
 app.use((req, res, next) => {
-    const error = new Error("This page is not Found")
-    res.status(404)
+    const error = new Error("This page is not Found");
+    error.status = 404;
     next(error);
-})
+});
 
+// 2. معالج الأخطاء العام (Global Error Handler)
 app.use((error, req, res, next) => {
-    res.status(401).json({ message: error.message });
-})
+    // التحقق مما إذا كانت الاستجابة قد أُرسلت بالفعل للعميل
+    if (res.headersSent) {
+        return next(error);
+    }
 
-
-
+    const statusCode = error.status || 500;
+    res.status(statusCode).json({ message: error.message });
+});
 
 server.listen(process.env.PORT || 2500, () => {
-    console.log(`port is ${process.env.PORT}`);
-
-})
+    console.log(`Server is running on port ${process.env.PORT || 2500}`);
+});

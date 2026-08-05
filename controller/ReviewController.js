@@ -17,8 +17,7 @@ const CreateReview = asynchandler(async (req, res) => {
         rating: req.body.rating,
         comment: req.body.comment
     })
-    await NewReview.save();
-    res.status(201).json({ status: "success", review: NewReview });
+    return res.status(201).json({ status: "success", review: NewReview });
 })
 
 const GetReview = asynchandler(async (req, res) => {

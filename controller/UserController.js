@@ -6,6 +6,7 @@ const path = require('path');
 const { validatregister, validatlogin, validatupdateuser, User } = require("../models/User");
 const { RemoveImage, UploadFile } = require("../utils/cloudinary");
 const { Student } = require("../models/Student");
+const { Teacher } = require("../models/Teacher");
 
 const RegisterUser = asynchandler(async (req, res) => {
     const { fullname, email, password, Gender, birthdate, role } = req.body;
@@ -44,9 +45,9 @@ const RegisterUser = asynchandler(async (req, res) => {
             enrolled_courses_count: 0
         });
     } else if (role === 'teacher') {
-        await Instructor.create({
+        await Teacher.create({
             userId: newuser._id,
-            total_students: 0,
+            total_student: 0,
             total_courses: 0,
             status: 'pending'
         });
@@ -80,7 +81,6 @@ const LoginUser = asynchandler(async (req, res) => {
 
     if (user.role === 'teacher') {
 
-    const { Teacher } = require('../models/Teacher'); 
     const teacherData = await Teacher.findOne({ userId: user._id });
 
     if (!teacherData) {
@@ -107,7 +107,7 @@ const LoginUser = asynchandler(async (req, res) => {
 const GetUsers = asynchandler(async (req, res) => {
 
     const users = await User.find({}, { "__v": false, "password": false })
-
+    return res.status(200).json({ status: "success", users })
 })
 
 const GetUser = asynchandler(async (req, res) => {

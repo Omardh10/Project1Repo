@@ -35,7 +35,8 @@ const validateupdateteacher = (obj) => {
     const schema = joi.object({
         userId: joi.string(),
         total_student: joi.number(),
-        total_courses: joi.number()
+        total_courses: joi.number(),
+        stetus: joi.string()
     })
     return schema.validate(obj)
 }

@@ -165,6 +165,11 @@ const CourseSchema = new mongoose.Schema({
         ref: 'Teacher',
         required: true
     },
+    userId:{
+         type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
     title: {
         type: String,
         required: true
@@ -305,11 +310,12 @@ const Course = mongoose.model('Course', CourseSchema);
 const validatecreatecourse = (obj) => {
     const schema = joi.object({
         teacher_id: joi.string(),
+          userId: joi.string(),
         title: joi.string().required(),
         description: joi.string().required(),
         category: joi.string().required(),
         price: joi.number().required(),
-        about_course: joi.string().required(),
+        about_course: joi.string(),
         isfounder: joi.boolean(),
         founding_ratio: joi.number()
     });

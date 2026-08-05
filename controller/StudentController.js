@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
 const { validateupdatestudent, validatecreatestudent, Student } = require("../models/Student");
+const {User} = require("../models/User");
 
 const CreateStudent = asynchandler(async (req, res) => {
 
@@ -65,8 +66,8 @@ const UpdateStudent = asynchandler(async (req, res) => {
 
 const GetStudents = asynchandler(async (req, res) => {
 
-    const students = await Student.find();
-    res.status(200).json({ status: "success", students })
+    const students = await User.find({role: 'student'})
+    return res.status(200).json({ status: "success", students })
 
 })
 
