@@ -309,6 +309,7 @@ const validatecreatecourse = (obj) => {
         description: joi.string().required(),
         category: joi.string().required(),
         price: joi.number().required(),
+        about_course: joi.string().required(),
         isfounder: joi.boolean(),
         founding_ratio: joi.number()
     });
@@ -320,6 +321,7 @@ const validatupdatecourse = (obj) => {
         teacher_id: joi.string(),
         title: joi.string(),
         description: joi.string(),
+        about_course: joi.string(),
         category: joi.string(),
         price: joi.number(),
         isfounder: joi.boolean(),

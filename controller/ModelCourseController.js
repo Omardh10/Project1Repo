@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
-const { validatecreatemodelcourse, validatupdatemodelcourse } = require("../models/ModelCourse");
+const { validatecreatemodelcourse, validatupdatemodelcourse, ModelCourse } = require("../models/ModelCourse");
 
 const CreateModelCourse = asynchandler(async (req, res) => {
 

@@ -35,6 +35,7 @@ const validatupdatemodelcourse = (obj) => {
 }
 
 module.exports = {
+    ModelCourse,
     validatecreatemodelcourse,
     validatupdatemodelcourse
 };

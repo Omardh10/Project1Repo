@@ -318,7 +318,7 @@ const PostImageCourse = asynchandler(async (req, res) => {
 
 const GetCourses = asynchandler(async (req, res) => {
 
-    const courses = await Course.find();
+    const courses = await Course.find().populate('category').populate('teacher_id');
     res.status(200).json({ status: "success", courses })
 
 })

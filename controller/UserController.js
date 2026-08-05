@@ -159,7 +159,7 @@ const UpdateUser = asynchandler(async (req, res) => {
         }
         const updateuser = await User.findByIdAndUpdate({ _id: req.params.id }, {
             $set: {
-                fullname: req.body.username,
+                fullname: req.body.fullname,
                 birthdate: req.body.birthdate,
                 password: req.body.password,
                 bio: req.body.bio,
