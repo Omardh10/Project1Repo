@@ -291,7 +291,6 @@ const CourseSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-
     approval_date: {
         type: Date,
         default: Date.now

@@ -112,6 +112,25 @@ const PostCourseFiles = asynchandler(async (req, res) => {
     }
 });
 
+const getCoursesAtCatogaries = asynchandler(async (req, res) => {
+    const { category } = req.query; 
+
+    if (!category) {
+        return res.status(400).json({ message: "يرجى تحديد الفئة في الاستعلام" });
+    }
+
+    try {
+        const courses = await Course.find({ category }).populate('teacher_id').populate('category');
+        if (courses.length === 0) {
+            return res.status(404).json({ message: "لا توجد دورات في هذه الفئة" });
+        }
+        res.status(200).json({ status: "success", courses });
+    } catch (error) {
+        console.error("ERROR_FETCHING_COURSES_BY_CATEGORY:", error);
+        res.status(500).json({ message: "حدث خطأ أثناء جلب الدورات", errorDetails: error.message || error });
+    }
+});
+
 // 3. Get Course Details (Lock/Unlock logic)
 // const GetCourse = asynchandler(async (req, res) => {
 //     const course = await Course.findById(req.params.id).populate('teacher_id');
@@ -292,6 +311,7 @@ const PostImageCourse = asynchandler(async (req, res) => {
  const t = await Teacher.findOne({ userId: reqUserId });
  
     if (course.teacher_id.toString() == t._id.toString()) {
+        console.log("User is authorized to upload image for this course");
         const result = await UploadFile(pathimg);
 
         if (course.image && course.image.publicId) {
@@ -351,6 +371,31 @@ const DeleteCourse = asynchandler(async (req, res) => {
         res.status(200).json({ status: "success", message: "course deleted successfully" });
     } else {
         return res.status(403).json({ message: "you are not authorized to delete this course" });
+    }
+});
+const getFundCourses = asynchandler(async (req, res) => {
+    const courses = await Course.find({ isfounder: true }).populate('category').populate('teacher_id');
+    res.status(200).json({ status: "success", courses });
+});
+const setvip =  asynchandler(async (req, res) => {
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+        return res.status(404).json({ message: "course not found" });
+    }
+
+    const reqUserId = req.user.id || req.user._id;
+    const teacher = await Teacher.findOne({ userId: req.user.id });
+    const isOwner = course.teacher_id.toString() === teacher.id;
+
+    if (isOwner ) {
+        if(  course.isfounder == true){
+            return res.status(400).json({ message: "course is already founder" });
+        }
+        course.isfounder = true; 
+        await course.save();
+        res.status(200).json({ status: "success", message: `course founder status set to ${course.isfounder}` });
+    } else {
+        return res.status(403).json({ message: "you are not authorized to change this course's founder status" });
     }
 });
 
@@ -497,11 +542,14 @@ module.exports = {
     CreateCourse,
     PostCourseFiles,
     GetCourse,
+    getCoursesAtCatogaries,
     UpdateCourse,
     GetCourses,
     DeleteCourse,
     PostImageCourse,
     PurchaseCourse,
+    setvip,
+    getFundCourses,
     FilterCourses,
     GetMyCourses,
     addCommentTolesson

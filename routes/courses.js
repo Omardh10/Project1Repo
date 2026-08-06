@@ -1,15 +1,18 @@
 const express = require('express');
-const { GetCourses, GetCourse, CreateCourse, UpdateCourse,GetMyCourses,addCommentTolesson, DeleteCourse, PostImageCourse, PurchaseCourse, PostCourseFiles, FilterCourses } = require('../controller/CourseController');
+const { GetCourses, GetCourse, CreateCourse,setvip,getFundCourses, UpdateCourse,GetMyCourses,getCoursesAtCatogaries,addCommentTolesson, DeleteCourse, PostImageCourse, PurchaseCourse, PostCourseFiles, FilterCourses } = require('../controller/CourseController');
 const router = express.Router();
 const { verifytoken, verifytokenandisAdmin } = require('../middlware/VerifyTokens');
 const { CompleteLesson } = require('../controller/EnrollmentController');
 const { uploadLessonFiles, uploadphoto } = require('../middlware/upload');
 const multer = require('multer');
-
+router.get('/search', FilterCourses);
 router.get('/Mycourses', verifytoken, GetMyCourses);
 // Get All Courses
 router.get('/', GetCourses)
+router.get('/coursesFund', verifytoken, getFundCourses)
+router.get('/courseatcat/:categoryId', getCoursesAtCatogaries)
 
+router.post('/setvipcourses/:id', verifytoken, setvip)
 // Get Single Course
 router.get('/:id',verifytoken, GetCourse)
 
@@ -46,7 +49,7 @@ router.post('/purchasecourse/:courseId', verifytoken, PurchaseCourse)
 router.patch('/complete-lesson', verifytoken, CompleteLesson);
 
 // search course
-router.get('/search', FilterCourses);
+
 
 
 module.exports = router;
