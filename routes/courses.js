@@ -11,7 +11,7 @@ router.get('/Mycourses', verifytoken, GetMyCourses);
 router.get('/', GetCourses)
 
 // Get Single Course
-router.get('/:id', GetCourse)
+router.get('/:id',verifytoken, GetCourse)
 
 // Create New Course
 router.post('/newcourse', verifytoken, CreateCourse)

@@ -203,14 +203,14 @@ const GetCourse = asynchandler(async (req, res) => {
     if (userId) {
         const isAdmin = userRole === 'admin';
         
-        // 🔧 التعديل هنا: المقارنة مع userId التابع للـ teacher وليس _id الخاص بمستند Teacher
         const teacherUserId = course.teacher_id?.userId || course.teacher_id?._id;
         const isOwner = teacherUserId && teacherUserId.toString() === userId.toString();
 
         if (isAdmin || isOwner) {
             isAuthorized = true; 
         } else {
-            const enrollment = await Enrollment.findOne({ student_id: userId, course_id: course._id });
+            const enrollment = await Enrollment.findOne({ userId: req.user.id, course_id: course._id });
+            console.log(req.user.id, String(course._id))
             if (enrollment) {
                 isAuthorized = true;
             }
