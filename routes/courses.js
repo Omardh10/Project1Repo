@@ -4,7 +4,66 @@ const router = express.Router();
 const { verifytoken, verifytokenandisAdmin } = require('../middlware/VerifyTokens');
 const { CompleteLesson } = require('../controller/EnrollmentController');
 const { uploadLessonFiles, uploadphoto } = require('../middlware/upload');
+const { Enrollment } = require('../models/Enrollment');
 const multer = require('multer');
+
+router.get('/popular', async (req, res) => {
+    try {
+
+        const distinctCourses = await Enrollment.distinct('course_id');
+        const totalCoursesCount = distinctCourses.length;
+
+      
+        if (totalCoursesCount === 0) {
+            return res.status(200).json([]);
+        }
+
+        const top10PercentCount = Math.max(1, Math.ceil(totalCoursesCount * 0.2));
+
+        const popularCourses = await Enrollment.aggregate([
+            {
+                $group: {
+                    _id: '$course_id',
+                    enrollmentCount: { $sum: 1 }
+                }
+            },
+            {
+                $sort: { enrollmentCount: -1 }
+            },
+            {
+                $limit: top10PercentCount 
+            },
+            {
+                $lookup: {
+                    from: 'courses', 
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'courseDetails'
+                }
+            },
+            {
+                $unwind: '$courseDetails'
+            },
+            {
+                $project: {
+                    _id: 0,
+                    courseId: '$_id',
+                    enrollmentCount: 1,
+                    course: '$courseDetails'
+                }
+            }
+        ]);
+
+        res.status(200).json({
+            totalUniqueCourses: totalCoursesCount,
+            top10PercentLimit: top10PercentCount,
+            data: popularCourses
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'حدث خطأ في الخادم', error: error.message });
+    }
+});
+
 router.get('/search', FilterCourses);
 router.get('/Mycourses', verifytoken, GetMyCourses);
 // Get All Courses
@@ -33,6 +92,12 @@ router.post(
     ]),
     PostCourseFiles
 );
+
+
+
+
+
+
 
 // Update Course
 router.patch('/:id', verifytoken, UpdateCourse)
