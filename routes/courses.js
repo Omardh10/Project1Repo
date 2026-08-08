@@ -56,7 +56,7 @@ router.get('/popular', async (req, res) => {
 
         res.status(200).json({
             totalUniqueCourses: totalCoursesCount,
-            top10PercentLimit: top10PercentCount,
+            top20PercentLimit: top10PercentCount,
             data: popularCourses
         });
     } catch (error) {
