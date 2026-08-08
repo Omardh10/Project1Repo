@@ -198,7 +198,7 @@ const getCoursesAtCatogaries = asynchandler(async (req, res) => {
 // 3. Get Course Details (Lock/Unlock logic)
 const GetCourse = asynchandler(async (req, res) => {
 
-    const course = await Course.findById(req.params.id).populate('category');
+    const course = await Course.findById(req.params.id).populate('category').populate('userId');;
     if (!course) {
         return res.status(404).json({ message: "course not found" })
     }
@@ -339,7 +339,7 @@ const PostImageCourse = asynchandler(async (req, res) => {
 
 const GetCourses = asynchandler(async (req, res) => {
 
-    const courses = await Course.find().populate('category').populate('teacher_id');
+    const courses = await Course.find().populate('category').populate('teacher_id').populate('userId');
     res.status(200).json({ status: "success", courses })
 
 })
@@ -347,7 +347,7 @@ const GetCourses = asynchandler(async (req, res) => {
 const GetMyCourses = asynchandler(async (req, res) => {
  
     const teacher = await Teacher.findOne({ userId: req.user.id });
-    const courses = await Course.find({ teacher_id: teacher.id }).populate('category');
+    const courses = await Course.find({ teacher_id: teacher.id }).populate('category').populate('userId');;
     console.log("Teacher ID:", teacher.id);
     console.log("useer:" , req.user.id);
     res.status(200).json({ status: "success", courses })
@@ -374,7 +374,7 @@ const DeleteCourse = asynchandler(async (req, res) => {
     }
 });
 const getFundCourses = asynchandler(async (req, res) => {
-    const courses = await Course.find({ isfounder: true }).populate('category').populate('teacher_id');
+    const courses = await Course.find({ isfounder: true }).populate('category').populate('teacher_id').populate('userId');;
     res.status(200).json({ status: "success", courses });
 });
 const setvip =  asynchandler(async (req, res) => {
@@ -414,7 +414,7 @@ const FilterCourses = asynchandler(async (req, res) => {
 
     const courses = await Course.find(filterQuery)
         .select('-lessons')
-        .populate('teacher_id', 'name email'); 
+        .populate('teacher_id', 'name email').populate('userId');; 
 
     if (courses.length === 0) {
         return res.status(404).json({ message: "No courses found matching your criteria" });
