@@ -8,6 +8,8 @@ const { Question } = require("../models/Quastion");
 const { StudentAnswer } = require("../models/StudentAnswer");
 
 
+
+
 const CreateExam = asynchandler(async (req, res) => {
     const { error } = validatecreateexam(req.body);
     if (error) {
@@ -21,6 +23,7 @@ const CreateExam = asynchandler(async (req, res) => {
         course_id: req.body.course_id,
         title: req.body.title,
         passing_score: req.body.passing_score,
+        questions:  req.body.questions
     })
     res.status(201).json({ status: "success", exam: NewExam });
 })
@@ -55,8 +58,17 @@ const UpdateExam = asynchandler(async (req, res) => {
     } else { return res.status(403).json({ message: "You are not authorized to update this exam" }); }
 })
 
+const GetExamWithCourseId = asynchandler(async (req, res) => {
+    const exam = await Exam.findOne({ course_id: req.params.course_id })
+    if (!exam) {
+        return res.status(404).json({ message: "Exam not found" });
+    }
+    res.status(200).json({ status: "success", data:exam });
+})
+
 const GetExams = asynchandler(async (req, res) => {
-    if (req.user.role == 'teacher' || req.user.role == 'admin') {
+    // if (req.user.role == 'teacher' || req.user.role == 'admin') {
+    if(true){
         const exams = await Exam.find();
         res.status(200).json({ status: "success", exams });
     } else {
@@ -135,6 +147,7 @@ module.exports = {
     GetExam,
     UpdateExam,
     GetExams,
+    GetExamWithCourseId,
     DeleteExam,
     SubmitExam
 }
