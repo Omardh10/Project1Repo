@@ -7,6 +7,7 @@ const { validatregister, validatlogin, validatupdateuser, User } = require("../m
 const { RemoveImage, UploadFile } = require("../utils/cloudinary");
 const { Student } = require("../models/Student");
 const { Teacher } = require("../models/Teacher");
+const {Parent} = require('../models/Parent')
 
 const RegisterUser = asynchandler(async (req, res) => {
     const { fullname, email, password, Gender, birthdate, role } = req.body;

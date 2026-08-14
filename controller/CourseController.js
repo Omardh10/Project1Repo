@@ -418,7 +418,7 @@ const FilterCourses = asynchandler(async (req, res) => {
 
     const courses = await Course.find(filterQuery)
         .select('-lessons')
-        .populate('teacher_id', 'name email').populate('userId');; 
+        .populate('teacher_id', 'name email').populate('userId').populate('category'); 
 
     if (courses.length === 0) {
         return res.status(404).json({ message: "No courses found matching your criteria" });

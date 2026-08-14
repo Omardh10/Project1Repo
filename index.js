@@ -11,6 +11,7 @@ const examroute = require('./routes/exams');
 const parentroute = require('./routes/parents');
 const quastionroute = require('./routes/quastions');
 const reportroute = require('./routes/reports');
+const childaccount = require('./routes/childaccount')
 const reviewsroute = require('./routes/reviews');
 const studenntroute = require('./routes/students');
 const teacherroute = require('./routes/teachers');
@@ -44,6 +45,7 @@ app.use('/api/reviews', reviewsroute)
 app.use('/api/students', studenntroute)
 app.use('/api/teachers', teacherroute)
 app.use('/api/transctions', transctionroute)
+app.use('/api/childaccount',childaccount)
 // app.use('/api/quastions', quastionroute)
 app.use('/api/studentanswers', stdanswerroute)
 app.use('/api/modelcourses', modelcourseroute)
