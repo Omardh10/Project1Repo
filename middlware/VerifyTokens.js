@@ -5,10 +5,14 @@ const verifytoken = (req, res, next) => {
 
     const authtoken = req.headers.authorization;
     if (authtoken) {
-        const token = authtoken.split(" ")[1];        //    Authorization && authorization    //
+        const token = authtoken.split(" ")[1];      
         try {
             const decoded = jwt.verify(token, process.env.JWT_KEY)
             req.user = decoded;
+            console.log(req.user);
+            if(req.user.isAccount===false){
+                return res.status(500).json({ message: "you are not allowd you are not verified ... " })
+            }
             next();
         } catch (error) {
             return res.status(400).json({ message: "invalid token ..." })

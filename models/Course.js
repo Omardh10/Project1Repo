@@ -182,6 +182,10 @@ const CourseSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    adminPercentage: {
+        type: Number,
+        default: 0
+    },
     category: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Category',
@@ -202,6 +206,10 @@ const CourseSchema = new mongoose.Schema({
             default: false
         },
         quiz: {
+            time: {
+                type: Number,
+                required: true,
+            },
             title: {
                 type: String,
                 default: ""
@@ -218,7 +226,8 @@ const CourseSchema = new mongoose.Schema({
                 correct_answer: {
                     type: String,
                     required: true,
-                }
+                },
+
             }]
         },
         title: {

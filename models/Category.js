@@ -11,6 +11,14 @@ const CategorySchema = new mongoose.Schema({
     description: {
         type: String,
         trim: true
+    },
+    icon: {
+        type: Object,
+        default: {
+            url: "",
+            publicId: null
+        },
+        required: true
     }
 }, { timestamps: true });
 

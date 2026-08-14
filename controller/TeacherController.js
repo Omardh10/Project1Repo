@@ -17,11 +17,11 @@ const CreateTeacher = asynchandler(async (req, res) => {
         return res.status(403).json({ message: error.details[0].message })
     }
     const NewTeacher = Teacher.create({
-        userId: req.body.userId,
-        total_student: req.body.total_student,
-        total_courses: req.body.total_courses
+        userId: req.user.id,
+        total_student: 0,
+        total_courses: 0
     })
-    await NewTeacher.save();
+   
     res.status(201).json({ status: "success", teacher: NewTeacher });
 
 })
@@ -52,7 +52,7 @@ const GetTeachersPercentage = asynchandler(async (req, res) => {
 
 
 const createquiz = asynchandler(async (req, res) => {
-    const {title, questions, options, correct_answers, lessonId} = req.body;
+    const {title, questions, options, correct_answers, lessonId, time} = req.body;
     const course = await Course.findById(req.params.id);
     if (!course) {
         return res.status(404).json({ message: "Course not found" });
@@ -60,14 +60,14 @@ const createquiz = asynchandler(async (req, res) => {
     if (course.lessons.id(lessonId).hasquiz) {
         return res.status(400).json({ message: "Quiz already exists for this lesson" });
     }
-    course.lessons.id(lessonId).quiz = { title, questions, options, correct_answers };
+    course.lessons.id(lessonId).quiz = { title, questions, options, correct_answers, time };
     course.lessons.id(lessonId).hasquiz = true;
     await course.save();
    return res.status(201).json({ status: "success", quiz: course.lessons.id(lessonId).quiz });
 });
 
 const getStudentDetailsForTeacher = asynchandler(async (req, res) => {
-    const { userId } = req.params; // userId أو student_id الخاص بالطالب
+    const { userId } = req.params;
 
     const teacher = await Teacher.findOne({ userId: req.user.id });
     if (!teacher) {

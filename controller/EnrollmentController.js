@@ -6,6 +6,7 @@ const path = require('path');
 const { validatecreateenrollment, validateupdateenrollment, Enrollment } = require("../models/Enrollment");
 const { Course } = require("../models/Course");
 const {Teacher} = require('../models/Teacher')
+const { Student } = require("../models/Student");
 
 const CreateEnrollment = asynchandler(async (req, res) => {
     const { error } = validatecreateenrollment(req.body);
@@ -58,7 +59,7 @@ const UpdateEnrollment = asynchandler(async (req, res) => {
 })
 
 const GetEnrollments = asynchandler(async (req, res) => {
-    const enrollments = await Enrollment.find().populate('student_id', '-password -token').populate('course_id');
+    const enrollments = await Enrollment.find().populate('student_id').populate('course_id').populate('userId').populate('teacher_id');
     return res.status(200).json({ status: "success", enrollments });
     if (req.user.role == "teacher" || req.user.role == "admin") {
         return res.status(200).json({ status: "success", enrollments });
@@ -205,7 +206,8 @@ const getStudentOfTeacher = asynchandler(async (req, res) => {
 });
 
 const CompleteLesson = asynchandler(async (req, res) => {
-    const studentId = req.user.id;
+    const student = await Student.findOne({ userId: req.user.id });
+    const studentId = student._id 
     const { courseId, lessonId } = req.body; 
 
     const course = await Course.findById(courseId);

@@ -58,9 +58,9 @@ const RegisterUser = asynchandler(async (req, res) => {
         });
     }
 
-    const token = jwt.sign({ id: newuser._id, role: newuser.role }, process.env.JWT_KEY);
+    const token = jwt.sign({ id: newuser._id, role: newuser.role, isAccount: newuser.isAccount }, process.env.JWT_KEY);
 
-    res.status(201).json({ status: "success", user: newuser, token: token });
+    res.status(200).json({ status: "success", user: newuser, token: token });
 });
 const LoginUser = asynchandler(async (req, res) => {
     const { email, password } = req.body;
@@ -80,6 +80,10 @@ const LoginUser = asynchandler(async (req, res) => {
         return res.status(400).json({ message: "invalid email or password" });
     }
 
+    if(user.isAccount === false){
+        return res.status(403).json({code: "OTP123", message: "حسابك غير مفعل بعد. يرجى التحقق من بريدك الإلكتروني لتفعيل الحساب." });
+    }
+
     if (user.role === 'teacher') {
 
         const teacherData = await Teacher.findOne({ userId: user._id });
@@ -97,7 +101,7 @@ const LoginUser = asynchandler(async (req, res) => {
         }
     }
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_KEY);
+    const token = jwt.sign({ id: user._id, role: user.role, isAccount: user.isAccount }, process.env.JWT_KEY);
 
     res.status(200).json({
         user: user,

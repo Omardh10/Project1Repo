@@ -8,6 +8,7 @@ const { UploadFile, RemoveImage } = require("../utils/cloudinary"); // تأكد 
 const { Enrollment } = require("../models/Enrollment");
 const { Transaction } = require("../models/Transaction");
 const { Student } = require('../models/Student')
+const {Admin} = require('../models/Admin')
 const { validatecreateteacher, validateupdateteacher , Teacher} = require("../models/Teacher");
 
 const CreateCourse = asynchandler(async (req, res) => {
@@ -17,13 +18,15 @@ const CreateCourse = asynchandler(async (req, res) => {
     if (error) {
         return res.status(403).json({ message: error.details[0].message })
     }
-
-    const NewCourse =await Course.create({
+ const admin = await Admin.find();
+   
+   const NewCourse =await Course.create({
         teacher_id,
         userId: req.user.id,
         title,
         description,
         category,
+        adminPercentage: admin[0].platform_fee_precentage,
         price
     })
   
@@ -392,6 +395,7 @@ const setvip =  asynchandler(async (req, res) => {
             return res.status(400).json({ message: "course is already founder" });
         }
         course.isfounder = true; 
+        course.adminPercentage += 15 
         await course.save();
         res.status(200).json({ status: "success", message: `course founder status set to ${course.isfounder}` });
     } else {

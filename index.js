@@ -18,6 +18,7 @@ const transctionroute = require('./routes/transctions');
 const stdanswerroute = require('./routes/stdanswer');
 const modelcourseroute = require('./routes/modelcourses');
 const admin = require('./routes/admin')
+const {routerOtp} = require('./routes/otp')
 // const quastionroute = require('./routes/quastions')
 require("dotenv").config();
 const app = express();
@@ -46,6 +47,7 @@ app.use('/api/transctions', transctionroute)
 // app.use('/api/quastions', quastionroute)
 app.use('/api/studentanswers', stdanswerroute)
 app.use('/api/modelcourses', modelcourseroute)
+app.use('/api/otp', routerOtp)
 
 // 1. معالج الصفحات غير الموجودة (404)
 app.use((req, res, next) => {

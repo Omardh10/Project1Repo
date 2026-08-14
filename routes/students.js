@@ -11,7 +11,7 @@ const router = express.Router();
 router.get('/', GetStudents)
 
 // Get Single Student
-router.get('/:id', GetStudent)
+router.get('/one', verifytoken, GetStudent)
 
 router.get('/user/:userId', GetStudentByUserId)
 // Create New Student
