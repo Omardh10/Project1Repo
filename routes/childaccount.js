@@ -6,6 +6,7 @@ const router = express.Router();
 // Get All Child Accounts
 router.get('/', GetChildAccounts)
 
+
 // Get Single Child Account
 router.get('/:id', GetChildAccount)
 
