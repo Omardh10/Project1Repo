@@ -6,9 +6,56 @@ const path = require('path');
 const { validateupdateexam, validatecreateexam, Exam } = require("../models/Exam");
 const { Question } = require("../models/Quastion");
 const { StudentAnswer } = require("../models/StudentAnswer");
+const { Student } = require("../models/Student");
+const { Enrollment } = require("../models/Enrollment");
 
 
+const postDegree = asynchandler(async (req, res) => {
+    const { student_id, course_id, degree } = req.body;
+    
+    const student = await Student.findById(student_id);
+    if (!student) {
+        return res.status(404).json({ message: "Student not found" });
+    }
+    
+    const course = await Course.findById(course_id);
+    if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+    }
+    student.degrees.push({ courseId: course_id, degree });
+    const passingScore = course.passing_score || 60; 
+    const fullMark = 100; 
+    
+    let isPassed = degree >= passingScore;
 
+    if (degree === fullMark) {
+        student.points += 10;
+        await SendNotification(student.userId, "إنجاز مذهل! حصلت على العلامة التامة في الاختبار وكسبت 10 نقاط 🏆", { pointsAdded: 10, type: 'exam_points' });
+    } else if (isPassed) {
+        student.points += 5;
+        await SendNotification(student.userId, "مبروك نجاحك في الاختبار! حصلت على 5 نقاط 👍", { pointsAdded: 5, type: 'exam_points' });
+    }
+
+    await student.save();
+    let certificateIssuedNow = false;
+    const enrollment = await Enrollment.findOne({ student_id: student._id, course_id: course_id });
+    
+    if (enrollment && enrollment.progress_percentage === 100 && isPassed) {
+        if (!enrollment.certificate_issued) { 
+            enrollment.certificate_issued = true;
+            await enrollment.save();
+            certificateIssuedNow = true;
+            await SendNotification(student.userId, "تهانينا! لقد أتممت الكورس والاختبار بنجاح، وتم إصدار شهادتك الآن 🎓", { type: 'certificate_issued' });
+        }
+    }
+
+    res.status(200).json({ 
+        status: "success", 
+        student_points: student.points,
+        certificate_issued: certificateIssuedNow,
+        message: certificateIssuedNow ? "تم رصد العلامة وإصدار الشهادة بنجاح!" : "تم رصد العلامة بنجاح"
+    });
+});
 
 const CreateExam = asynchandler(async (req, res) => {
     const { error } = validatecreateexam(req.body);
@@ -149,5 +196,6 @@ module.exports = {
     GetExams,
     GetExamWithCourseId,
     DeleteExam,
-    SubmitExam
+    SubmitExam,
+    postDegree
 }

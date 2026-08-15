@@ -93,37 +93,31 @@ const DeleteEnrollment = asynchandler(async (req, res) => {
 })
 
 const getStudentOfTeacher = asynchandler(async (req, res) => {
-    // 1. قراءة المعاملات (الصفحة، العدد، كلمة البحث)
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 10;
     const skip = (page - 1) * limit;
     const search = req.query.search || "";
 
-    // 2. البحث عن المعلم المرتبط بحساب المستخدم الحالي
     const teacher = await Teacher.findOne({ userId: req.user.id });
     if (!teacher) {
         return res.status(404).json({ message: "حساب المعلم غير موجود" });
     }
 
-    // 3. بناء الـ Aggregation Pipeline
     const pipeline = [
-        // أ. تصفية الاشتراكات التابعة لهذا المعلم فقط
         { $match: { teacher_id: teacher._id } },
 
-        // ب. إلغاء التكرار بالتجميع حسب userId الخاِص بالطالب
         {
             $group: {
-                _id: "$userId", // تجميع حسب الـ User المباشر
+                _id: "$userId",
                 student_id: { $first: "$student_id" },
-                totalEnrolledCourses: { $sum: 1 }, // عدد الكورسات التي سجل فيها مع هذا المعلم
+                totalEnrolledCourses: { $sum: 1 }, 
                 firstEnrolledAt: { $min: "$createdAt" }
             }
         },
 
-        // ج. جلب بيانات المستخدم من مجموعة users
         {
             $lookup: {
-                from: "users", // اسم الـ collection في Mongoose هو الجمع الصغير مفترضاً (users)
+                from: "users", 
                 localField: "_id",
                 foreignField: "_id",
                 as: "userData"
@@ -131,7 +125,6 @@ const getStudentOfTeacher = asynchandler(async (req, res) => {
         },
         { $unwind: "$userData" },
 
-        // د. جلب نقاط الطالب وحالته من مجموعة students (اختياري)
         {
             $lookup: {
                 from: "students",
@@ -148,7 +141,7 @@ const getStudentOfTeacher = asynchandler(async (req, res) => {
         }
     ];
 
-    // هـ. تطبيق البحث (Search) إذا قُدِّمت كلمة البحث
+   
     if (search.trim() !== "") {
         pipeline.push({
             $match: {
@@ -160,7 +153,7 @@ const getStudentOfTeacher = asynchandler(async (req, res) => {
         });
     }
 
-    // و. إضافة الترقيم (Pagination) وحساب الإجمالي باستخدام $facet
+
     pipeline.push({
         $facet: {
             metadata: [{ $count: "total" }],
@@ -184,14 +177,11 @@ const getStudentOfTeacher = asynchandler(async (req, res) => {
         }
     });
 
-    // 4. تنفيذ الاستعلام
     const result = await Enrollment.aggregate(pipeline);
 
     const students = result[0].data;
     const totalStudents = result[0].metadata[0] ? result[0].metadata[0].total : 0;
     const totalPages = Math.ceil(totalStudents / limit);
-
-    // 5. إرجاع النتيجة
     res.status(200).json({
         status: "success",
         results: students.length,
@@ -207,7 +197,8 @@ const getStudentOfTeacher = asynchandler(async (req, res) => {
 
 const CompleteLesson = asynchandler(async (req, res) => {
     const student = await Student.findOne({ userId: req.user.id });
-    const studentId = student._id 
+    const studentId = student._id;
+    const userId = req.user.id;
     const { courseId, lessonId } = req.body; 
 
     const course = await Course.findById(courseId);
@@ -219,37 +210,47 @@ const CompleteLesson = asynchandler(async (req, res) => {
     if (totalLessons === 0) {
         return res.status(400).json({ message: "This course has no lessons yet" });
     }
-
+    const currentEnrollment = await Enrollment.findOne({ student_id: studentId, course_id: courseId });
+    if (!currentEnrollment) {
+        return res.status(404).json({ message: "You are not enrolled in this course" });
+    }
+    
+    const isLessonAlreadyCompleted = currentEnrollment.completed_lessons.includes(lessonId);
     let enrollment = await Enrollment.findOneAndUpdate(
         { student_id: studentId, course_id: courseId },
         { $addToSet: { completed_lessons: lessonId } },
         { new: true }
     );
 
-    if (!enrollment) {
-        return res.status(404).json({ message: "You are not enrolled in this course" });
-    }
-
     const completedCount = enrollment.completed_lessons.length; 
-    const progress = Math.round((completedCount / totalLessons) * 100)
+    const progress = Math.round((completedCount / totalLessons) * 100);
     let status = 'in_progress';
-    let isCertificateIssued = false;
-
-    if (progress === 100) {
+    let message = "Progress updated";
+    if (!isLessonAlreadyCompleted) {
+        student.points += 2;
+        await SendNotification(userId, "مبروك! حصلت على نقطتين لإنهائك درساً جديداً 🌟", { pointsAdded: 2, type: 'lesson_points' });
+        if (progress === 100) {
+            status = 'completed'; 
+            student.points += 20;
+            message = "Congratulations! You completed all lessons in the course.";
+            await SendNotification(userId, "عمل رائع! لقد أنهيت جميع دروس الكورس وحصلت على 20 نقطة إضافية 🎉", { pointsAdded: 20, type: 'course_points' });
+        }
+        
+        await student.save(); 
+    } else if (progress === 100) {
         status = 'completed';
-        isCertificateIssued = true;
     }
 
     enrollment.progress_percentage = progress;
     enrollment.completion_status = status;
-    enrollment.certificate_issued = isCertificateIssued;
     await enrollment.save();
 
     res.status(200).json({
         status: "success",
         progress_percentage: enrollment.progress_percentage,
         completion_status: enrollment.completion_status,
-        message: progress === 100 ? "Congratulations! You completed the course." : "Progress updated"
+        points: student.points,
+        message: message
     });
 });
 

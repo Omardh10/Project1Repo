@@ -18,7 +18,19 @@ const StudentSchema = new mongoose.Schema({
     enrolled_courses_count: {
         type: Number,
         required: true
+    },
+    degrees: [{
+        courseId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Course',
+            required: true
+        },
+        degree: {
+            type: Number,
+            required: true
+        }
     }
+    ]
 }, { timestamps: true });
 const Student = mongoose.model('Student', StudentSchema);
 
