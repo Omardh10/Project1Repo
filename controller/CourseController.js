@@ -541,6 +541,61 @@ const PurchaseCourse = asynchandler(async (req, res) => {
     });
 });
 
+const SubmitLessonQuiz = asynchandler(async (req, res) => {
+
+    const { student_id, course_id, lesson_id, answers } = req.body;
+    
+    
+    const student = await Student.findById(student_id);
+    if (!student) {
+        return res.status(404).json({ message: "Student not found" });
+    }
+
+    const course = await Course.findById(course_id);
+    if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+    }
+
+    const lesson = course.lessons.id(lesson_id);
+    if (!lesson) {
+        return res.status(404).json({ message: "Lesson not found in this course" });
+    }
+
+    if (!lesson.hasquiz || !lesson.quiz || lesson.quiz.questions.length === 0) {
+        return res.status(400).json({ message: "This lesson does not have a quiz" });
+    }
+
+    let correctCount = 0;
+    let pointsEarned = 0;
+    for (const item of answers) {
+        const question = lesson.quiz.questions.id(item.question_id);
+        
+        if (question && question.correct_answer === item.selected_option) {
+            correctCount++;
+            pointsEarned += 2; 
+        }
+    }
+
+    if (pointsEarned > 0) {
+        student.points_balance = (student.points_balance || 0) + pointsEarned;
+        await student.save();
+        
+    }
+
+    res.status(200).json({
+        status: "success",
+        result: {
+            total_questions: lesson.quiz.questions.length,
+            correct_answers: correctCount,
+            points_earned: pointsEarned,
+            total_points: student.points_balance
+        },
+        message: pointsEarned > 0 
+            ? `Congratulations! You answered ${correctCount} questions correctly and earned ${pointsEarned} points.` 
+            : "No points earned. Better luck next time!"
+    });
+});
+
 
 module.exports = {
     CreateCourse,
@@ -556,5 +611,6 @@ module.exports = {
     getFundCourses,
     FilterCourses,
     GetMyCourses,
-    addCommentTolesson
+    addCommentTolesson,
+    SubmitLessonQuiz
 };

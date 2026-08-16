@@ -1,5 +1,5 @@
 const express = require('express');
-const { GetCourses, GetCourse, CreateCourse,setvip,getFundCourses, UpdateCourse,GetMyCourses,getCoursesAtCatogaries,addCommentTolesson, DeleteCourse, PostImageCourse, PurchaseCourse, PostCourseFiles, FilterCourses } = require('../controller/CourseController');
+const { GetCourses, GetCourse, CreateCourse,setvip,getFundCourses, UpdateCourse,GetMyCourses,getCoursesAtCatogaries,addCommentTolesson, DeleteCourse, PostImageCourse, PurchaseCourse, PostCourseFiles, FilterCourses, SubmitLessonQuiz } = require('../controller/CourseController');
 const router = express.Router();
 const { verifytoken, verifytokenandisAdmin } = require('../middlware/VerifyTokens');
 const { CompleteLesson } = require('../controller/EnrollmentController');
@@ -70,7 +70,7 @@ router.get('/Mycourses', verifytoken, GetMyCourses);
 router.get('/', GetCourses)
 router.get('/coursesFund', verifytoken, getFundCourses)
 router.get('/courseatcat/:categoryId', getCoursesAtCatogaries)
-
+router.post('/submit-lesson-quiz', verifytoken, SubmitLessonQuiz);
 router.post('/setvipcourses/:id', verifytoken, setvip)
 // Get Single Course
 router.get('/:id',verifytoken, GetCourse)

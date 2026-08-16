@@ -227,11 +227,11 @@ const CompleteLesson = asynchandler(async (req, res) => {
     let status = 'in_progress';
     let message = "Progress updated";
     if (!isLessonAlreadyCompleted) {
-        student.points += 2;
+        student.points_balance += 2;
         await SendNotification(userId, "مبروك! حصلت على نقطتين لإنهائك درساً جديداً 🌟", { pointsAdded: 2, type: 'lesson_points' });
         if (progress === 100) {
             status = 'completed'; 
-            student.points += 20;
+            student.points_balance += 20;
             message = "Congratulations! You completed all lessons in the course.";
             await SendNotification(userId, "عمل رائع! لقد أنهيت جميع دروس الكورس وحصلت على 20 نقطة إضافية 🎉", { pointsAdded: 20, type: 'course_points' });
         }
@@ -249,7 +249,7 @@ const CompleteLesson = asynchandler(async (req, res) => {
         status: "success",
         progress_percentage: enrollment.progress_percentage,
         completion_status: enrollment.completion_status,
-        points: student.points,
+        points: student.points_balance,
         message: message
     });
 });
