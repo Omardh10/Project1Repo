@@ -20,7 +20,7 @@ const stdanswerroute = require('./routes/stdanswer');
 const modelcourseroute = require('./routes/modelcourses');
 const admin = require('./routes/admin')
 const {routerOtp} = require('./routes/otp')
-const discount = reqiure('./routes/')
+const discount = require('./routes/discount')
 // const quastionroute = require('./routes/quastions')
 require("dotenv").config();
 const app = express();
