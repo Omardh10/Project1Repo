@@ -10,6 +10,7 @@ const { Transaction } = require("../models/Transaction");
 const { Student } = require('../models/Student')
 const {Admin} = require('../models/Admin')
 const { validatecreateteacher, validateupdateteacher , Teacher} = require("../models/Teacher");
+const { ChiledAccount } = require("../models/ChiledAccount");
 
 const CreateCourse = asynchandler(async (req, res) => {
 
@@ -507,7 +508,7 @@ const PurchaseCourse = asynchandler(async (req, res) => {
     const teacherEarnings = course.price - platformFee;
 
     const transaction = await Transaction.create({
-        student_id: studant.id, 
+        student_id: finalStudentId || studant.id, 
         course_id: course._id,
         amount: course.price,     
         platform_fee: platformFee,
@@ -522,7 +523,7 @@ const PurchaseCourse = asynchandler(async (req, res) => {
     studant.save();
 
     const enrollment = await Enrollment.create({
-        student_id: studant.id, 
+        student_id: finalStudentId || studant.id, 
         userId: req.user.id,
         teacher_id: course.teacher_id,
         course_id: course._id,
@@ -541,10 +542,46 @@ const PurchaseCourse = asynchandler(async (req, res) => {
     });
 });
 
+const GetChildPurchasedCourses = asynchandler(async (req, res) => {
+    const parentId = await Parent.findOne({ userId: req.user.id });
+    const childId = req.params.childId; 
+    if (req.user.role !== 'parent') {
+        return res.status(403).json({ message: "فقط الآباء يمكنهم عرض كورسات أبنائهم" });
+    }
+    const childAccount = await ChiledAccount.findOne({
+        student_id: childId,
+        parent_id: parentId._id
+    });
+    if (!childAccount) {
+        return res.status(403).json({ message: "هذا الحساب غير مسجل كابن لديك أو غير موجود" });
+    }
+    const enrollments = await Enrollment.find({ student_id: childId })
+        .populate({
+            path: 'course_id',
+            select: 'title description image price teacher_id' 
+        });
+    if (!enrollments || enrollments.length === 0) {
+        return res.status(404).json({ message: "لا يوجد كورسات مشتراة لهذا الابن حتى الآن" });
+    }
+    res.status(200).json({
+        status: "success",
+        results: enrollments.length,
+        enrollments
+    });
+});
+
+const CourseForTeacher = asynchandler(async (req, res) => {
+    const teacher = await Teacher.findOne({ userId: req.user.id });
+    if (!teacher) {
+        return res.status(404).json({ message: "Teacher not found" });
+    }
+    let courses = await Course.find({ teacher_id: teacher._id }).populate('category').populate('userId');
+    res.status(200).json({ status: "success", courses });
+});
+
 const SubmitLessonQuiz = asynchandler(async (req, res) => {
 
     const { student_id, course_id, lesson_id, answers } = req.body;
-    
     
     const student = await Student.findById(student_id);
     if (!student) {
@@ -612,5 +649,7 @@ module.exports = {
     FilterCourses,
     GetMyCourses,
     addCommentTolesson,
-    SubmitLessonQuiz
+    SubmitLessonQuiz,
+    CourseForTeacher,
+    GetChildPurchasedCourses
 };

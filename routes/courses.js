@@ -1,5 +1,5 @@
 const express = require('express');
-const { GetCourses, GetCourse, CreateCourse,setvip,getFundCourses, UpdateCourse,GetMyCourses,getCoursesAtCatogaries,addCommentTolesson, DeleteCourse, PostImageCourse, PurchaseCourse, PostCourseFiles, FilterCourses, SubmitLessonQuiz } = require('../controller/CourseController');
+const { GetCourses, GetCourse, CreateCourse,setvip,getFundCourses, UpdateCourse,GetMyCourses,getCoursesAtCatogaries,addCommentTolesson, DeleteCourse, PostImageCourse, PurchaseCourse, PostCourseFiles, FilterCourses, SubmitLessonQuiz, CourseForTeacher, GetChildPurchasedCourses } = require('../controller/CourseController');
 const router = express.Router();
 const { verifytoken, verifytokenandisAdmin } = require('../middlware/VerifyTokens');
 const { CompleteLesson } = require('../controller/EnrollmentController');
@@ -63,7 +63,7 @@ router.get('/popular', async (req, res) => {
         res.status(500).json({ message: 'حدث خطأ في الخادم', error: error.message });
     }
 });
-
+router.get('/coursesforteachers', CourseForTeacher);
 router.get('/search', FilterCourses);
 router.get('/Mycourses', verifytoken, GetMyCourses);
 // Get All Courses
@@ -74,7 +74,7 @@ router.post('/submit-lesson-quiz', verifytoken, SubmitLessonQuiz);
 router.post('/setvipcourses/:id', verifytoken, setvip)
 // Get Single Course
 router.get('/:id',verifytoken, GetCourse)
-
+router.get('/child-courses/:childId', verifytoken, GetChildPurchasedCourses);
 // Create New Course
 router.post('/newcourse', verifytoken, CreateCourse)
 
