@@ -63,7 +63,7 @@ router.get('/popular', async (req, res) => {
         res.status(500).json({ message: 'حدث خطأ في الخادم', error: error.message });
     }
 });
-router.get('/coursesforteachers', CourseForTeacher);
+router.get('/coursesforteachers/:teacherId', CourseForTeacher);
 router.get('/search', FilterCourses);
 router.get('/Mycourses', verifytoken, GetMyCourses);
 // Get All Courses
