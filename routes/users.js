@@ -1,6 +1,6 @@
 const express = require('express');
 const { verifytokenandisAdmin, verifytoken, verifytokenandonlyuser, verifytokenandauthorization } = require('../middlware/VerifyTokens');
-const { GetUsers, GetUser, RegisterUser, LoginUser, UpdateUser, DeleteUser, PostImageUser, CheckEmailUser } = require('../controller/UserController');
+const { GetUsers, GetUser, RegisterUser, LoginUser, UpdateUser, DeleteUser, PostImageUser, CheckEmailUser, GoogleLogin } = require('../controller/UserController');
 const { uploadphoto } = require('../middlware/upload');
 const router = express.Router();
 
@@ -27,6 +27,8 @@ router.post('/profile/profile-photo-upload', verifytoken, uploadphoto.single('im
 
 // Check Email User
 router.get('/checkemail', CheckEmailUser)
+
+router.post('/google-login', GoogleLogin);
 
 
 

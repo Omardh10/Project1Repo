@@ -7,6 +7,61 @@ const { validatregister, validatlogin, validatupdateuser, User } = require("../m
 const { RemoveImage, UploadFile } = require("../utils/cloudinary");
 const { Student } = require("../models/Student");
 const { Teacher } = require("../models/Teacher");
+const { OAuth2Client } = require("google-auth-library");
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+const GoogleLogin = asynchandler(async (req, res) => {
+
+    const { googleToken, role } = req.body;
+
+    if (!googleToken) {
+        return res.status(400).json({ message: "يرجى توفير توكن جوجل" });
+    }
+
+    try {
+
+        const ticket = await client.verifyIdToken({
+            idToken: googleToken,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+
+        const payload = ticket.getPayload();
+        const { email, name, picture, sub: googleId } = payload;
+        let user = await User.findOne({ email });
+
+        if (!user) {
+            user = await User.create({
+                username: name,
+                email: email,
+                password: googleId,
+                profilePhoto: picture,
+                role: role || 'student',
+                isGoogleAccount: true 
+            });
+        }
+        const token = jwt.sign(
+            { id: user._id, role: user.role },
+            process.env.JWT_SECRET_KEY,
+            { expiresIn: "30d" }
+        );
+        res.status(200).json({
+            status: "success",
+            message: "تم تسجيل الدخول بنجاح",
+            user: {
+                _id: user._id,
+                username: user.username,
+                email: user.email,
+                profilePhoto: user.profilePhoto,
+                role: user.role
+            },
+            token
+        });
+
+    } catch (error) {
+        console.error("خطأ في التحقق من توكن جوجل:", error);
+        return res.status(401).json({ message: "توكن جوجل غير صالح أو منتهي الصلاحية" });
+    }
+});
 
 const RegisterUser = asynchandler(async (req, res) => {
     const { fullname, email, password, Gender, birthdate, role } = req.body;
@@ -80,8 +135,8 @@ const LoginUser = asynchandler(async (req, res) => {
         return res.status(400).json({ message: "invalid email or password" });
     }
 
-    if(user.isAccount === false){
-        return res.status(403).json({code: "OTP123", message: "حسابك غير مفعل بعد. يرجى التحقق من بريدك الإلكتروني لتفعيل الحساب." });
+    if (user.isAccount === false) {
+        return res.status(403).json({ code: "OTP123", message: "حسابك غير مفعل بعد. يرجى التحقق من بريدك الإلكتروني لتفعيل الحساب." });
     }
 
     if (user.role === 'teacher') {
@@ -214,4 +269,5 @@ module.exports = {
     DeleteUser,
     PostImageUser,
     CheckEmailUser,
+    GoogleLogin
 }
