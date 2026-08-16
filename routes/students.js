@@ -5,7 +5,20 @@ const { DeleteReport, UpdateReport, CreateReport, GetReport, GetReports } = requ
 const { GetReviews, GetReview, CreateReview, UpdateReview, DeleteReview } = require('../controller/ReviewController');
 const { GetStudents, GetStudent, CreateStudent, UpdateStudent, DeleteStudent, GetStudentByUserId, ChargeStudentBalance } = require('../controller/StudentController');
 const { verifytoken } = require('../middlware/VerifyTokens');
+const {Student} =require('../models/Student')
+const {Course} =require('../models/Course')
+const {Enrollment} = require('../models/Enrollment')
 const router = express.Router();
+
+router.get('/mycourses', verifytoken ,  asynchandler(async (req, res) => {
+  const student = await Student.findOne({userId: req.user.id})
+  if(!student){
+    return res.status(404).json({message: "student not found"})
+  }
+  const myCourses = await Enrollment.find({student_id: student.id})
+res.status(200).json({message:"success", data: myCourses })
+
+}))
 
 // Get All Students
 router.get('/', GetStudents)
@@ -18,6 +31,8 @@ router.get('/user/:userId', GetStudentByUserId)
 router.post('/newstudent', CreateStudent)
 
 router.post('/chargebalance',verifytoken, ChargeStudentBalance)
+
+
 
 // Update Student
 router.patch('/:id',verifytoken, UpdateStudent)

@@ -15,6 +15,9 @@ const StudentSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    Discount_codes:{
+    type: [String],
+    },
     enrolled_courses_count: {
         type: Number,
         required: true
