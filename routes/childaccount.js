@@ -1,5 +1,5 @@
 const express = require('express');
-const { GetChildAccounts, GetChildAccount, UpdateChildAccount, DeleteChildAccount } = require('../controller/ChiledAccountController');
+const { GetChildAccounts, GetChildAccount,CreateChildAccount, UpdateChildAccount, DeleteChildAccount } = require('../controller/ChiledAccountController');
 const { verifytoken } = require('../middlware/VerifyTokens');
 const router = express.Router();
 

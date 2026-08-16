@@ -23,5 +23,5 @@ const validatecreateDiscount = (obj) => {
 
 module.exports = {
     Discount,
-    validatecreateadmin,
+    validatecreateDiscount,
 };
