@@ -7,6 +7,7 @@ const { validatregister, validatlogin, validatupdateuser, User } = require("../m
 const { RemoveImage, UploadFile } = require("../utils/cloudinary");
 const { Student } = require("../models/Student");
 const { Teacher } = require("../models/Teacher");
+const {Parent} = require('../models/Parent')
 const { OAuth2Client } = require("google-auth-library");
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 

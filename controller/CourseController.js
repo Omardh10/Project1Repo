@@ -8,9 +8,9 @@ const { UploadFile, RemoveImage } = require("../utils/cloudinary"); // تأكد 
 const { Enrollment } = require("../models/Enrollment");
 const { Transaction } = require("../models/Transaction");
 const { Student } = require('../models/Student')
-const {Admin} = require('../models/Admin')
-const { validatecreateteacher, validateupdateteacher , Teacher} = require("../models/Teacher");
-const { ChiledAccount } = require("../models/ChiledAccount");
+const { Admin } = require('../models/Admin')
+const {Discount} =  require('../models/Discount')
+const { validatecreateteacher, validateupdateteacher, Teacher } = require("../models/Teacher");
 
 const CreateCourse = asynchandler(async (req, res) => {
 
@@ -19,9 +19,9 @@ const CreateCourse = asynchandler(async (req, res) => {
     if (error) {
         return res.status(403).json({ message: error.details[0].message })
     }
- const admin = await Admin.find();
-   
-   const NewCourse =await Course.create({
+    const admin = await Admin.find();
+
+    const NewCourse = await Course.create({
         teacher_id,
         userId: req.user.id,
         title,
@@ -30,7 +30,7 @@ const CreateCourse = asynchandler(async (req, res) => {
         adminPercentage: admin[0].platform_fee_precentage,
         price
     })
-  
+
     res.status(201).json({ status: "success", course: NewCourse });
 })
 
@@ -67,7 +67,7 @@ const PostCourseFiles = asynchandler(async (req, res) => {
         const videoUrl = videoResult?.secure_url || videoResult?.url;
         const videoPublicId = videoResult?.public_id || videoResult?.publicId;
         // قراءة المدة بالثواني من استجابة Cloudinary
-        const videoDuration = videoResult?.duration || 0; 
+        const videoDuration = videoResult?.duration || 0;
 
         if (!videoUrl || !videoPublicId) {
             throw new Error("فشل الحصول على رابط الفيديو أو publicId من Cloudinary");
@@ -109,15 +109,15 @@ const PostCourseFiles = asynchandler(async (req, res) => {
         if (videoFile && fs.existsSync(videoFile.path)) fs.unlinkSync(videoFile.path);
         if (pdfFile && fs.existsSync(pdfFile.path)) fs.unlinkSync(pdfFile.path);
 
-        return res.status(500).json({ 
+        return res.status(500).json({
             message: "حدث خطأ أثناء معالجة ورفع الملفات",
-            errorDetails: error.message || error 
+            errorDetails: error.message || error
         });
     }
 });
 
 const getCoursesAtCatogaries = asynchandler(async (req, res) => {
-    const { category } = req.query; 
+    const { category } = req.query;
 
     if (!category) {
         return res.status(400).json({ message: "يرجى تحديد الفئة في الاستعلام" });
@@ -146,7 +146,7 @@ const getCoursesAtCatogaries = asynchandler(async (req, res) => {
 //     let userId = null;
 //     let userRole = null;
 //     const authtoken = req.headers.authorization;
-    
+
 //     if (authtoken) {
 //         const token = authtoken.split(" ")[1];
 //         try {
@@ -155,7 +155,7 @@ const getCoursesAtCatogaries = asynchandler(async (req, res) => {
 //             userRole = decoded.role;
 //         } catch (error) {}
 //     }
-    
+
 //     if (userId) {
 //         const isAdmin = userRole === 'admin';
 //         const isOwner = course.teacher_id && course.teacher_id._id && 
@@ -211,26 +211,26 @@ const GetCourse = asynchandler(async (req, res) => {
     let userId = null;
     let userRole = null;
     const authtoken = req.headers.authorization;
-    
+
     if (authtoken) {
         const token = authtoken.split(" ")[1];
         try {
             const decoded = jwt.verify(token, process.env.JWT_KEY);
-            userId = decoded.id || decoded._id; 
+            userId = decoded.id || decoded._id;
             userRole = decoded.role;
         } catch (error) {
             console.error("JWT Verification error:", error.message);
         }
     }
-    
+
     if (userId) {
         const isAdmin = userRole === 'admin';
-        
+
         const teacherUserId = course.teacher_id?.userId || course.teacher_id?._id;
         const isOwner = teacherUserId && teacherUserId.toString() === userId.toString();
 
         if (isAdmin || isOwner) {
-            isAuthorized = true; 
+            isAuthorized = true;
         } else {
             const enrollment = await Enrollment.findOne({ userId: req.user.id, course_id: course._id });
             console.log(req.user.id, String(course._id))
@@ -241,7 +241,7 @@ const GetCourse = asynchandler(async (req, res) => {
     }
 
     let courseToSend = course.toObject();
-    
+
     // إخفاء الروابط فقط إذا لم يكن مستخدم موثق أو صاحب كورس أو مشترك
     if (!isAuthorized) {
         if (courseToSend.lessons && courseToSend.lessons.length > 0) {
@@ -250,9 +250,9 @@ const GetCourse = asynchandler(async (req, res) => {
                     _id: lesson._id,
                     title: lesson.title,
                     hasquiz: lesson.hasquiz,
-                    quiz: lesson.quiz ,
+                    quiz: lesson.quiz,
                     description: lesson.description,
-                    contentType: lesson.contentType, 
+                    contentType: lesson.contentType,
                     video_content: {
                         url: "LOCKED",
                         publicId: null
@@ -266,10 +266,10 @@ const GetCourse = asynchandler(async (req, res) => {
         }
     }
 
-    res.status(200).json({ 
-        status: "success", 
-        isPurchased: isAuthorized, 
-        course: courseToSend 
+    res.status(200).json({
+        status: "success",
+        isPurchased: isAuthorized,
+        course: courseToSend
     });
 });
 
@@ -296,24 +296,24 @@ const UpdateCourse = asynchandler(async (req, res) => {
     return res.status(200).json({ status: "success", course: course });
 });
 const PostImageCourse = asynchandler(async (req, res) => {
-        if (!req.file) {
+    if (!req.file) {
         return res.status(400).json({ message: "no image provided" });
     }
 
     const pathimg = path.join(__dirname, `../images/${req.file.filename}`);
-    
+
     // التحقق من وجود الكورس أولاً قبل رفع الصورة لسيرفر السحاب (Optimization)
     const course = await Course.findById(req.params.id);
     if (!course) {
         if (fs.existsSync(pathimg)) fs.unlinkSync(pathimg);
         return res.status(404).json({ message: "Course not found" });
     }
-       
-  
+
+
 
     const reqUserId = req.user.id || req.user._id;
- const t = await Teacher.findOne({ userId: reqUserId });
- 
+    const t = await Teacher.findOne({ userId: reqUserId });
+
     if (course.teacher_id.toString() == t._id.toString()) {
         console.log("User is authorized to upload image for this course");
         const result = await UploadFile(pathimg);
@@ -329,13 +329,13 @@ const PostImageCourse = asynchandler(async (req, res) => {
 
         await course.save();
         if (fs.existsSync(pathimg)) fs.unlinkSync(pathimg);
-        
-        return res.status(200).json({ 
-            message: "Image uploaded successfully", 
-            courseImage: { url: result.secure_url, publicId: result.public_id } 
+
+        return res.status(200).json({
+            message: "Image uploaded successfully",
+            courseImage: { url: result.secure_url, publicId: result.public_id }
         });
     } else {
-        if (fs.existsSync(pathimg)) fs.unlinkSync(pathimg); 
+        if (fs.existsSync(pathimg)) fs.unlinkSync(pathimg);
         return res.status(403).json({ message: "You are not authorized to upload image for this course" });
     }
 });
@@ -349,11 +349,11 @@ const GetCourses = asynchandler(async (req, res) => {
 })
 
 const GetMyCourses = asynchandler(async (req, res) => {
- 
+
     const teacher = await Teacher.findOne({ userId: req.user.id });
     const courses = await Course.find({ teacher_id: teacher.id }).populate('category').populate('userId');;
     console.log("Teacher ID:", teacher.id);
-    console.log("useer:" , req.user.id);
+    console.log("useer:", req.user.id);
     res.status(200).json({ status: "success", courses })
 
 })
@@ -364,7 +364,7 @@ const DeleteCourse = asynchandler(async (req, res) => {
     if (!course) {
         return res.status(404).json({ message: "course not found" });
     }
-    
+
     const reqUserId = req.user.id || req.user._id;
     const teacher = await Teacher.findOne({ userId: req.user.id });
     const isOwner = course.teacher_id.toString() === teacher.id;
@@ -381,7 +381,7 @@ const getFundCourses = asynchandler(async (req, res) => {
     const courses = await Course.find({ isfounder: true }).populate('category').populate('teacher_id').populate('userId');;
     res.status(200).json({ status: "success", courses });
 });
-const setvip =  asynchandler(async (req, res) => {
+const setvip = asynchandler(async (req, res) => {
     const course = await Course.findById(req.params.id);
     if (!course) {
         return res.status(404).json({ message: "course not found" });
@@ -391,12 +391,12 @@ const setvip =  asynchandler(async (req, res) => {
     const teacher = await Teacher.findOne({ userId: req.user.id });
     const isOwner = course.teacher_id.toString() === teacher.id;
 
-    if (isOwner ) {
-        if(  course.isfounder == true){
+    if (isOwner) {
+        if (course.isfounder == true) {
             return res.status(400).json({ message: "course is already founder" });
         }
-        course.isfounder = true; 
-        course.adminPercentage += 15 
+        course.isfounder = true;
+        course.adminPercentage += 15
         await course.save();
         res.status(200).json({ status: "success", message: `course founder status set to ${course.isfounder}` });
     } else {
@@ -405,7 +405,7 @@ const setvip =  asynchandler(async (req, res) => {
 });
 
 const FilterCourses = asynchandler(async (req, res) => {
-    const { keyword, category } = req.query; 
+    const { keyword, category } = req.query;
 
     let filterQuery = {};
 
@@ -414,21 +414,21 @@ const FilterCourses = asynchandler(async (req, res) => {
     }
 
     if (category) {
-        filterQuery.category = category; 
+        filterQuery.category = category;
     }
 
     const courses = await Course.find(filterQuery)
         .select('-lessons')
-        .populate('teacher_id', 'name email').populate('userId');; 
+        .populate('teacher_id', 'name email').populate('userId').populate('category');
 
     if (courses.length === 0) {
         return res.status(404).json({ message: "No courses found matching your criteria" });
     }
 
-    res.status(200).json({ 
-        status: "success", 
+    res.status(200).json({
+        status: "success",
         results: courses.length,
-        courses 
+        courses
     });
 });
 
@@ -453,12 +453,12 @@ const addCommentTolesson = asynchandler(async (req, res) => {
 
     course.lessons.id(lessonId).Comments.push(newComment);
     await course.save();
-    
+
     res.status(201).json({ status: "success", comment: newComment });
-}   );
+});
 
 const PurchaseCourse = asynchandler(async (req, res) => {
-    const purchaserId = req.user.id || req.user._id; 
+    const purchaserId = req.user.id || req.user._id;
     const purchaserRole = req.user.role;
     const courseId = req.params.courseId;
     let finalStudentId;
@@ -466,7 +466,7 @@ const PurchaseCourse = asynchandler(async (req, res) => {
 
     if (purchaserRole === 'parent') {
 
-        const { target_student_id } = req.body; 
+        const { target_student_id } = req.body;
 
         if (!target_student_id) {
             return res.status(400).json({ message: "يجب إرسال معرف الابن (target_student_id) لشراء الكورس له" });
@@ -481,7 +481,7 @@ const PurchaseCourse = asynchandler(async (req, res) => {
         }
 
         finalStudentId = target_student_id;
-        
+
     } else if (purchaserRole !== 'student') {
 
         return res.status(403).json({ message: "فقط الطلاب والآباء يمكنهم شراء الكورسات" });
@@ -495,48 +495,67 @@ const PurchaseCourse = asynchandler(async (req, res) => {
         return res.status(400).json({ message: "This course is not available for purchase" });
     }
 
-     const studant = await Student.findOne({ userId: req.user.id });
+    const studant = await Student.findOne({ userId: req.user.id });
     const alreadyEnrolled = await Enrollment.findOne({ student_id: finalStudentId || studant.id, course_id: courseId });
     if (alreadyEnrolled) {
         return res.status(400).json({ message: "هذا الطالب يمتلك الكورس مسبقاً" });
     }
-    if(studant.money_balance < course.price){
+    if (studant.money_balance < course.price) {
         return res.status(400).json({ message: "رصيدك غير كافي لشراء هذا الكورس" });
     }
-        const platformFeePercentage = 0.20; 
+    const platformFeePercentage = 0.20;
     const platformFee = course.price * platformFeePercentage;
     const teacherEarnings = course.price - platformFee;
 
     const transaction = await Transaction.create({
-        student_id: finalStudentId || studant.id, 
+        student_id: studant.id,
         course_id: course._id,
-        amount: course.price,     
+        amount: course.price,
         platform_fee: platformFee,
         instructor_earnings: teacherEarnings,
         payment_status: 'completed'
     });
     const teacher = await Teacher.findById(course.teacher_id)
-    if(!teacher){
-          return res.status(404).json({ message: "teacher not found" });
+    if (!teacher) {
+        return res.status(404).json({ message: "teacher not found" });
     }
     studant.enrolled_courses_count++;
-    studant.save();
+    await studant.save();
+
+    let price = course.price;
+    const { discount_code } = req.body;
+let discount = false;
+let  discount_Amount =0;
+    if (discount_code) {
+
+        const discount = await Discount.findOne({ code: discount_code });
+        if (!discount) {
+            return res.status(404).json({ message: "كود الخصم غير صحيح أو غير موجود" });
+        }
+        const discountAmount = (course.price * discount.discount_precentage) / 100;
+        discount_Amount = discountAmount
+        price = course.price - discountAmount;
+    }
+
 
     const enrollment = await Enrollment.create({
-        student_id: finalStudentId || studant.id, 
+        student_id: studant.id,
         userId: req.user.id,
         teacher_id: course.teacher_id,
         course_id: course._id,
+        price: price,
         progress_percentage: 0,
         completion_status: 'in_progress',
         certificate_issued: false
     });
 
     teacher.total_student++;
-    teacher.save()
-    res.status(201).json({ 
-        status: "success", 
-        message: "Course purchased successfully", 
+    await teacher.save()
+    res.status(201).json({
+        status: "success",
+        message: discountAmount > 0 
+            ? `تم تطبيق الخصم بنجاح! تم خصم ${discount_Amount} من سعر الكورس.` 
+            : "تم شراء الكورس بنجاح",
         transactionId: transaction._id,
         enrollmentData: enrollment
     });

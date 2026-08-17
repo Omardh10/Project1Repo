@@ -11,6 +11,7 @@ const examroute = require('./routes/exams');
 const parentroute = require('./routes/parents');
 const quastionroute = require('./routes/quastions');
 const reportroute = require('./routes/reports');
+const childaccount = require('./routes/childaccount')
 const reviewsroute = require('./routes/reviews');
 const studenntroute = require('./routes/students');
 const teacherroute = require('./routes/teachers');
@@ -20,6 +21,7 @@ const modelcourseroute = require('./routes/modelcourses');
 const admin = require('./routes/admin')
 const childaccroute = require('./routes/childaccount');
 const {routerOtp} = require('./routes/otp')
+const discount = require('./routes/discount')
 // const quastionroute = require('./routes/quastions')
 require("dotenv").config();
 const app = express();
@@ -45,7 +47,7 @@ app.use('/api/reviews', reviewsroute)
 app.use('/api/students', studenntroute)
 app.use('/api/teachers', teacherroute)
 app.use('/api/transctions', transctionroute)
-app.use('/api/childaccounts', childaccroute)
+// app.use('/api/quastions', quastionroute)
 app.use('/api/studentanswers', stdanswerroute)
 app.use('/api/modelcourses', modelcourseroute)
 app.use('/api/otp', routerOtp)

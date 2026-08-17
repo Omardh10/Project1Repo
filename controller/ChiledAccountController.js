@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
+const {ChiledAccount} =  require('../models/ChiledAccount')
 const { validatecreatechildaccount, validateupdatechildaccount } = require("../models/ChiledAccount");
 
 const CreateChildAccount = asynchandler(async (req, res) => {
