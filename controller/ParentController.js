@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
-const { validatecreateparent, validateupdateparent } = require("../models/Parent");
+const { validatecreateparent, validateupdateparent, Parent } = require("../models/Parent");
 
 
 const CreateParent = asynchandler(async (req, res) => {
