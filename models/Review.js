@@ -3,7 +3,7 @@ const joi = require('joi');
 const ReviewSchema = new mongoose.Schema({
     student_id: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'Student',
         required: true
     },
     course_id: {

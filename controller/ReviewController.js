@@ -4,21 +4,39 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
 const { validatecreatereview, validateupdatereview } = require("../models/Review");
+const { SendNotification } = require("../socket/socket");
 
 
 const CreateReview = asynchandler(async (req, res) => {
     const { error } = validatecreatereview(req.body);
     if (error) {
-        return res.status(403).json({ message: error.details[0].message })
+        return res.status(403).json({ message: error.details[0].message });
     }
-    const NewReview = Review.create({
+    let student = await Student.findOne({ userId: req.user.id });
+    const NewReview = await Review.create({
         course_id: req.body.course_id,
-        student_id: req.body.student_id,
+        student_id: student._id,
         rating: req.body.rating,
         comment: req.body.comment
-    })
-    return res.status(201).json({ status: "success", review: NewReview });
-})
+    });
+    let pointsEarned = 0;
+    if (req.body.rating && req.body.comment && req.body.comment.trim() !== "") {
+
+        if (student) {
+            pointsEarned = 2;
+            student.points_balance = (student.points_balance || 0) + pointsEarned;
+            await student.save();
+            await SendNotification(student.userId, "شكراً لتقييمك الكورس! حصلت على نقطتين ⭐", { pointsAdded: 2, type: 'review_points' });
+        }
+    }
+
+    return res.status(201).json({
+        status: "success",
+        review: NewReview,
+        points_earned: pointsEarned,
+        message: pointsEarned > 0 ? "تم حفظ التقييم وحصلت على نقطتين!" : "تم حفظ التقييم بنجاح"
+    });
+});
 
 const GetReview = asynchandler(async (req, res) => {
     const review = await Review.findById(req.params.id);

@@ -4,9 +4,7 @@ const { Server } = require('socket.io');
 const http = require('http');
 const server = http.createServer(app);
 const cors = require('cors');
-
-
-const Notification = require('./models/Notification'); 
+const Notification = require('../models/Notifications'); 
 
 const io = new Server(server, {
     cors: {
@@ -26,7 +24,7 @@ const SendNotification = async (userId, message, data) => {
             message,
             data
         });
-        const savedNotify = await newNotification.save();
+         savedNotify = await newNotification.save();
 
         if (users[userId]) {
             io.to(users[userId]).emit('notification', {
