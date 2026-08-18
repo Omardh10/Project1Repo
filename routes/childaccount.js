@@ -1,10 +1,11 @@
 const express = require('express');
-const { GetChildAccounts, GetChildAccount, UpdateChildAccount, DeleteChildAccount, CreateChildAccount } = require('../controller/ChiledAccountController');
+const { GetChildAccounts, GetChildAccount,CreateChildAccount, UpdateChildAccount, DeleteChildAccount } = require('../controller/ChiledAccountController');
 const { verifytoken } = require('../middlware/VerifyTokens');
 const router = express.Router();
 
 // Get All Child Accounts
 router.get('/', GetChildAccounts)
+
 
 // Get Single Child Account
 router.get('/:id', GetChildAccount)

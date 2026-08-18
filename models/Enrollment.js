@@ -6,12 +6,16 @@ const EnrollmentSchema = new mongoose.Schema({
         ref: 'Student',
         required: true
     },
-     userId:{
+    userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
     },
-    teacher_id:{
+    price: {
+        type: Number,
+        required: true
+    },
+    teacher_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Teacher',
         required: true
@@ -35,10 +39,10 @@ const EnrollmentSchema = new mongoose.Schema({
         default: false
     },
     completed_lessons: [
-        { 
+        {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Course'
-         }
+        }
     ]
 }, { timestamps: true });
 
