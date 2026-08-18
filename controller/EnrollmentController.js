@@ -7,6 +7,7 @@ const { validatecreateenrollment, validateupdateenrollment, Enrollment } = requi
 const { Course } = require("../models/Course");
 const {Teacher} = require('../models/Teacher')
 const { Student } = require("../models/Student");
+const { SendNotification } = require("../socket/socket");
 
 const CreateEnrollment = asynchandler(async (req, res) => {
     const { error } = validatecreateenrollment(req.body);

@@ -634,7 +634,7 @@ let  discount_Amount =0;
         transactionId: transaction._id,
         enrollmentData: enrollment
     });
-});
+}});
 const GetChildPurchasedCourses = asynchandler(async (req, res) => {
     const parentId = await Parent.findOne({ userId: req.user.id });
     const childId = req.params.childId; 
