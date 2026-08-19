@@ -7,26 +7,38 @@ const {ChiledAccount} =  require('../models/ChiledAccount')
 const { validatecreatechildaccount, validateupdatechildaccount } = require("../models/ChiledAccount");
 
 const CreateChildAccount = asynchandler(async (req, res) => {
-    const { student_id, parent_id, age_group } = req.body;
 
-    const { error } = validatecreatechildaccount(req.body);
+    const parent_id = req.user.id || req.user._id;
+    const { name, age } = req.body;
+
+
+    const { error } = validatecreatechildaccount({ name, age, parent_id: parent_id.toString() });
     if (error) {
-        return res.status(403).json({ message: error.details[0].message })
+        return res.status(400).json({ message: error.details[0].message });
     }
-    if (req.user.role == 'parent') {
+
+    if (req.user.role === 'parent') {
         const childAccount = new ChiledAccount({
-            student_id,
+            name,
             parent_id,
-            age_group
-        })
-        await childAccount.save()
-        res.status(201).json({ message: "Child account created successfully", new_child_account: childAccount })
+            age,
+            courses: [] 
+        });
+        await childAccount.save();
+        
+        return res.status(201).json({ 
+            status: "success",
+            message: "تم إنشاء حساب الطفل بنجاح", 
+            new_child_account: childAccount 
+        });
+    } else {
+        return res.status(403).json({ message: "فقط الآباء يمكنهم إنشاء حسابات للأبناء" });
     }
-})
+});
 
 
 const GetChildAccounts = asynchandler(async (req, res) => {
-    const childAccounts = await ChiledAccount.find().populate('student_id').populate('parent_id');
+    const childAccounts = await ChiledAccount.find().populate('parent_id');
     res.status(200).json({ message: "Child accounts retrieved successfully", child_accounts: childAccounts })
 })
 
@@ -50,7 +62,7 @@ const UpdateChildAccount = asynchandler(async (req, res) => {
 })
 
 const GetChildAccount = asynchandler(async (req, res) => {
-    const childAccount = await ChiledAccount.findById(req.params.id).populate('student_id').populate('parent_id');
+    const childAccount = await ChiledAccount.findById(req.params.id).populate('parent_id');
     if (!childAccount) {
         return res.status(404).json({ message: "Child account not found" })
     }
