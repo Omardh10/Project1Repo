@@ -6,34 +6,39 @@ const path = require('path');
 const { ChiledAccount } = require('../models/ChiledAccount')
 const { validatecreatechildaccount, validateupdatechildaccount } = require("../models/ChiledAccount");
 const { Parent } = require('../models/Parent')
+
+
 const CreateChildAccount = asynchandler(async (req, res) => {
-
-    const parent_id = req.user.id || req.user._id;
+    if (req.user.role !== 'parent') {
+        return res.status(403).json({ message: "فقط الآباء يمكنهم إنشاء حسابات للأبناء" });
+    }
+    const parent = await Parent.findOne({ userId: req.user.id });
+    if (!parent) {
+        return res.status(404).json({ message: "حساب الأب غير موجود في قاعدة البيانات" });
+    }
     const { name, age } = req.body;
-
-
-    const { error } = validatecreatechildaccount({ name, age, parent_id: parent_id.toString() });
+    const { error } = validatecreatechildaccount({ 
+        name, 
+        age, 
+        parent_id: parent._id.toString()
+    });
     if (error) {
         return res.status(400).json({ message: error.details[0].message });
     }
+    const childAccount = new ChiledAccount({
+        name,
+        parent_id: parent._id, 
+        age,
+        courses: []
+    });
+    
+    await childAccount.save();
 
-    if (req.user.role === 'parent') {
-        const childAccount = new ChiledAccount({
-            name,
-            parent_id,
-            age,
-            courses: []
-        });
-        await childAccount.save();
-
-        return res.status(201).json({
-            status: "success",
-            message: "تم إنشاء حساب الطفل بنجاح",
-            new_child_account: childAccount
-        });
-    } else {
-        return res.status(403).json({ message: "فقط الآباء يمكنهم إنشاء حسابات للأبناء" });
-    }
+    return res.status(201).json({
+        status: "success",
+        message: "تم إنشاء حساب الطفل بنجاح",
+        new_child_account: childAccount
+    });
 });
 
 const GetChildAccountsByFather = asynchandler(async (req, res) => {
