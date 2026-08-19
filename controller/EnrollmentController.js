@@ -6,6 +6,9 @@ const path = require('path');
 const { validatecreateenrollment, validateupdateenrollment, Enrollment } = require("../models/Enrollment");
 const { Course } = require("../models/Course");
 const {Teacher} = require('../models/Teacher')
+const { validatecompletelesson } = require('../models/Enrollment');
+const {SendNotification} =  require('../socket/socket')
+
 
 const { Student } = require("../models/Student");
 
