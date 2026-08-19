@@ -13,11 +13,12 @@ const CreateStudent = asynchandler(async (req, res) => {
         return res.status(403).json({ message: error.details[0].message })
     }
 
-    const NewStudent = Student.create({
+    const NewStudent = new Student({
         userId: req.body.userId,
         points_balance: req.body.points_balance,
         enrolled_courses_count: req.body.enrolled_courses_count
     })
+    NewStudent.save();
 
     res.status(201).json({ status: "success", student: NewStudent });
 })

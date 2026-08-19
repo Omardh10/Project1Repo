@@ -13,15 +13,12 @@ const {Enrollment} = require('../models/Enrollment')
 const {SendNotification} = require('../socket/socket')
 const router = express.Router();
 
-router.get('/mycourses', verifytoken ,  asynchandler(async (req, res) => {
+router.get('/mycourses', verifytoken ,async  (req, res) => {
   const student = await Student.findOne({userId: req.user.id})
-  if(!student){
-    return res.status(404).json({message: "student not found"})
-  }
-  const myCourses = await Enrollment.find({student_id: student.id})
-res.status(200).json({message:"success", data: myCourses })
+  const myCourses = await Enrollment.find({student_id: student.id}).populate('course_id')
+return res.status(200).json({message:"success", data: myCourses })
 
-}))
+})
 
 router.post('/quiz-confirm', verifytoken, async(req,res)=>{
    const {boolQuiz} = req.body

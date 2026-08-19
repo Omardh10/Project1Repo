@@ -92,9 +92,8 @@ const validatupdateuser = (obj) => {
         password: joi.string().trim().min(6),
         bio: joi.string(),
         Gender: joi.string(),
-        role: joi.string().valid('user', 'admin', 'teacher', 'parent'),
-        status: joi.string().valid('active', 'inactive'),
-        fcmToken: joi.string().allow(null, '') // السماح بتعديل الـ fcmToken عند التحديث
+        role: joi.string().valid('student', 'admin', 'teacher', 'parent'),
+        status: joi.string().valid('active', 'inactive')
     })
     return schema.validate(obj)
 }

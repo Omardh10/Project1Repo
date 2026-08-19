@@ -25,7 +25,7 @@ router.put("/update-fcm-token", verifytoken, async (req, res) => {
 router.post('/auth/login', LoginUser)
 
 // Update User
-router.put('/profile/:id', verifytokenandonlyuser, UpdateUser)
+router.put('/profile/:id', UpdateUser)
 
 // Delete User
 router.delete('/profile/:id', verifytokenandauthorization, DeleteUser)

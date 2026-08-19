@@ -11,6 +11,9 @@ const { Student } = require('../models/Student')
 const { Admin } = require('../models/Admin')
 const {Discount} =  require('../models/Discount')
 const { validatecreateteacher, validateupdateteacher, Teacher } = require("../models/Teacher");
+const { ChiledAccount } = require("../models/ChiledAccount");
+const { Parent } = require("../models/Parent");
+
 
 const CreateCourse = asynchandler(async (req, res) => {
 
@@ -458,107 +461,155 @@ const addCommentTolesson = asynchandler(async (req, res) => {
 });
 
 const PurchaseCourse = asynchandler(async (req, res) => {
-    const purchaserId = req.user.id || req.user._id;
+    const purchaserId = req.user.id || req.user._id; // User ID from token
     const purchaserRole = req.user.role;
     const courseId = req.params.courseId;
-    let finalStudentId;
-
-
-    if (purchaserRole === 'parent') {
-
-        const { target_student_id } = req.body;
-
-        if (!target_student_id) {
-            return res.status(400).json({ message: "يجب إرسال معرف الابن (target_student_id) لشراء الكورس له" });
-        }
-        const childAccount = await ChiledAccount.findOne({
-            student_id: target_student_id,
-            parent_id: purchaserId
-        });
-
-        if (!childAccount) {
-            return res.status(403).json({ message: "هذا الحساب غير مسجل كابن لديك" });
-        }
-
-        finalStudentId = target_student_id;
-
-    } else if (purchaserRole !== 'student') {
-
-        return res.status(403).json({ message: "فقط الطلاب والآباء يمكنهم شراء الكورسات" });
-    }
 
     const course = await Course.findById(courseId);
-    if (!course) {
-        return res.status(404).json({ message: "Course not found" });
-    }
-    if (course.status !== 'approved') {
-        return res.status(400).json({ message: "This course is not available for purchase" });
+    if (!course || course.status !== 'approved') {
+        return res.status(400).json({ message: "الكورس غير موجود أو غير متاح للشراء" });
     }
 
-    const studant = await Student.findOne({ userId: req.user.id });
-    const alreadyEnrolled = await Enrollment.findOne({ student_id: finalStudentId || studant.id, course_id: courseId });
-    if (alreadyEnrolled) {
-        return res.status(400).json({ message: "هذا الطالب يمتلك الكورس مسبقاً" });
-    }
-    if (studant.money_balance < course.price) {
-        return res.status(400).json({ message: "رصيدك غير كافي لشراء هذا الكورس" });
-    }
-    const platformFeePercentage = 0.20;
-    const platformFee = course.price * platformFeePercentage;
-    const teacherEarnings = course.price - platformFee;
-
-    const transaction = await Transaction.create({
-        student_id: studant.id,
-        course_id: course._id,
-        amount: course.price,
-        platform_fee: platformFee,
-        instructor_earnings: teacherEarnings,
-        payment_status: 'completed'
-    });
-    const teacher = await Teacher.findById(course.teacher_id)
+    const teacher = await Teacher.findById(course.teacher_id);
     if (!teacher) {
-        return res.status(404).json({ message: "teacher not found" });
+        return res.status(404).json({ message: "المعلم غير موجود" });
     }
-    studant.enrolled_courses_count++;
-    await studant.save();
 
-    let price = course.price;
+    let finalPrice = course.price;
+    let discountAmount = 0;
     const { discount_code } = req.body;
-let discount = false;
-let  discount_Amount =0;
-    if (discount_code) {
 
+    if (discount_code) {
         const discount = await Discount.findOne({ code: discount_code });
         if (!discount) {
             return res.status(404).json({ message: "كود الخصم غير صحيح أو غير موجود" });
         }
-        const discountAmount = (course.price * discount.discount_precentage) / 100;
-        discount_Amount = discountAmount
-        price = course.price - discountAmount;
+        discountAmount = (course.price * discount.discount_precentage) / 100;
+        finalPrice = course.price - discountAmount;
     }
 
+    const platformFeePercentage = 0.20;
+    const platformFee = finalPrice * platformFeePercentage;
+    const teacherEarnings = finalPrice - platformFee;
+    if (purchaserRole === 'parent') {
+        const { child_id } = req.body; 
 
-    const enrollment = await Enrollment.create({
-        student_id: studant.id,
-        userId: req.user.id,
-        teacher_id: course.teacher_id,
-        course_id: course._id,
-        price: price,
-        progress_percentage: 0,
-        completion_status: 'in_progress',
-        certificate_issued: false
-    });
+        if (!child_id) {
+            return res.status(400).json({ message: "يجب إرسال معرف الابن (child_id)" });
+        }
 
-    teacher.total_student++;
-    await teacher.save()
-    res.status(201).json({
-        status: "success",
-        message: discountAmount > 0 
-            ? `تم تطبيق الخصم بنجاح! تم خصم ${discount_Amount} من سعر الكورس.` 
-            : "تم شراء الكورس بنجاح",
-        transactionId: transaction._id,
-        enrollmentData: enrollment
-    });
+        const parent = await Parent.findOne({ userId: purchaserId }) || await Parent.findById(purchaserId);
+        if (!parent) {
+            return res.status(404).json({ message: "حساب الأب غير موجود" });
+        }
+        const childAccount = await ChiledAccount.findOne({ _id: child_id, parent_id: parent._id })||await ChiledAccount.findById(child_id);
+        if (!childAccount) {
+            return res.status(403).json({ message: "حساب هذا الطفل غير مسجل لديك" });
+        }
+        if (childAccount.courses.includes(courseId)) {
+            return res.status(400).json({ message: "هذا الطفل يمتلك الكورس مسبقاً" });
+        }
+
+        if (parent.money_balance < finalPrice) {
+            return res.status(400).json({ message: "رصيدك غير كافي لشراء هذا الكورس" });
+        }
+        parent.money_balance -= finalPrice;
+        await parent.save();
+
+        childAccount.courses.push(course._id);
+        await childAccount.save();
+
+        
+        const transaction = await Transaction.create({
+            parent_id: parent._id,
+            child_id: childAccount._id,
+            course_id: course._id,
+            amount: finalPrice,    
+            platform_fee: platformFee,
+            instructor_earnings: teacherEarnings,
+            payment_status: 'completed'
+        });
+
+      
+        const enrollment = await Enrollment.create({
+            child_id: childAccount._id, 
+            userId: purchaserId,
+            teacher_id: course.teacher_id,
+            course_id: course._id,
+            price: finalPrice,
+            progress_percentage: 0,
+            completion_status: 'in_progress',
+            certificate_issued: false
+        });
+
+   
+        teacher.total_student++;
+        await teacher.save();
+
+        return res.status(201).json({ 
+            status: "success", 
+            message: discountAmount > 0 
+                ? `تم شراء الكورس للابن مع الخصم! تم توفير ${discountAmount}` 
+                : "تم شراء الكورس للابن بنجاح", 
+            transactionId: transaction._id,
+            enrollmentData: enrollment
+        });
+
+    } else if (purchaserRole === 'student') {
+        
+        const student = await Student.findOne({ userId: purchaserId });
+        if (!student) {
+            return res.status(404).json({ message: "Student profile not found" });
+        }
+
+        const alreadyEnrolled = await Enrollment.findOne({ student_id: student._id, course_id: courseId });
+        if (alreadyEnrolled) {
+            return res.status(400).json({ message: "أنت تمتلك هذا الكورس مسبقاً" });
+        }
+
+        if (student.money_balance < finalPrice) {
+            return res.status(400).json({ message: "رصيدك غير كافي لشراء هذا الكورس" });
+        }
+
+        student.money_balance -= finalPrice;
+        student.enrolled_courses_count++;
+        await student.save();
+
+        const transaction = await Transaction.create({
+            student_id: student._id,
+            course_id: course._id,
+            amount: finalPrice, 
+            platform_fee: platformFee,
+            instructor_earnings: teacherEarnings,
+            payment_status: 'completed'
+        });
+
+        const enrollment = await Enrollment.create({
+            student_id: student._id,
+            userId: purchaserId,
+            teacher_id: course.teacher_id,
+            course_id: course._id,
+            price: finalPrice,
+            progress_percentage: 0,
+            completion_status: 'in_progress',
+            certificate_issued: false
+        });
+
+        teacher.total_student++;
+        await teacher.save();
+
+        return res.status(201).json({
+            status: "success",
+            message: discountAmount > 0 
+                ? `تم تطبيق الخصم بنجاح! تم خصم ${discountAmount} من السعر.` 
+                : "تم شراء الكورس بنجاح",
+            transactionId: transaction._id,
+            enrollmentData: enrollment
+        });
+
+    } else {
+        return res.status(403).json({ message: "فقط الطلاب والآباء يمكنهم شراء الكورسات" });
+    }
 });
 
 const GetChildPurchasedCourses = asynchandler(async (req, res) => {
@@ -590,11 +641,11 @@ const GetChildPurchasedCourses = asynchandler(async (req, res) => {
 });
 
 const CourseForTeacher = asynchandler(async (req, res) => {
-    const teacher = await Teacher.findOne(req.params.teacherId);
+    const teacher = await Teacher.findById(req.params.teacherId);
     if (!teacher) {
         return res.status(404).json({ message: "Teacher not found" });
     }
-    let courses = await Course.find({ teacher_id: teacher._id }).populate('category').populate('userId');
+    let courses = await Course.find({ teacher_id: teacher.id }).populate('category').populate('userId');
     res.status(200).json({ status: "success", courses });
 });
 

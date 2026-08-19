@@ -37,23 +37,23 @@ ConnectToDb();
 const { initSocket } = require('./socket/socket');
 initSocket(server);
 
-app.use('/api/users', userroute);
-app.use('/api/admin', admin);
-app.use('/api/courses', courseroute);
-app.use('/api/categories', require('./routes/catogary'));
-app.use('/api/courseviewlogs', courseviewlogroute);
-app.use('/api/enrollments', enrollmentroute);
-app.use('/api/exams', examroute);
-app.use('/api/parents', parentroute);
-app.use('/api/reports', reportroute);
-app.use('/api/reviews', reviewsroute);
-app.use('/api/students', studenntroute);
-app.use('/api/discount', discount);
-app.use('/api/teachers', teacherroute);
-app.use('/api/transctions', transctionroute);
-app.use('/api/studentanswers', stdanswerroute);
-app.use('/api/modelcourses', modelcourseroute);
-app.use('/api/otp', routerOtp);
+app.use('/api/users', userroute)
+app.use('/api/admin', admin)
+app.use('/api/courses', courseroute)
+app.use('/api/categories', require('./routes/catogary'))
+app.use('/api/courseviewlogs', courseviewlogroute)
+app.use('/api/enrollments', enrollmentroute)
+app.use('/api/exams', examroute)
+app.use('/api/parents', parentroute)
+app.use('/api/reports', reportroute)
+app.use('/api/reviews', reviewsroute)
+app.use('/api/students', studenntroute)
+app.use('/api/teachers', teacherroute)
+app.use('/api/transctions', transctionroute)
+app.use('/api/childaccounts', childaccroute)
+app.use('/api/studentanswers', stdanswerroute)
+app.use('/api/modelcourses', modelcourseroute)
+app.use('/api/otp', routerOtp)
 
 // 1. معالج الصفحات غير الموجودة (404)
 app.use((req, res, next) => {
