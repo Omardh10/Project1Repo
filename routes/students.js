@@ -10,6 +10,7 @@ const { verifytoken } = require('../middlware/VerifyTokens');
 const {Student} =require('../models/Student')
 const {Course} =require('../models/Course')
 const {Enrollment} = require('../models/Enrollment')
+const {SendNotification} = require('../socket/socket')
 const router = express.Router();
 
 router.get('/mycourses', verifytoken ,  asynchandler(async (req, res) => {
@@ -21,6 +22,23 @@ router.get('/mycourses', verifytoken ,  asynchandler(async (req, res) => {
 res.status(200).json({message:"success", data: myCourses })
 
 }))
+
+router.post('/quiz-confirm', verifytoken, async(req,res)=>{
+   const {boolQuiz} = req.body
+  if(boolQuiz==false){
+     return res.status(200).json({message:"wrong answere "})
+  }
+  const student = await Student.findOne({userId: req.user.id});
+  
+  student.points_balance+=3
+  await student.save()
+          await SendNotification(req.user.id, "مبروك! حصلت على 3 نقاط   لاجابتك على السؤال بشكل صحيح 🌟", {  });
+  
+  return res.status(200).json({message:"very good, your answere is right"})
+
+
+
+} )
 
 // Get All Students
 router.get('/', GetStudents)

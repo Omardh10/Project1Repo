@@ -5,6 +5,7 @@ const asynchandler = require("express-async-handler");
 const {Student} = require('../models/Student');
 const { Discount} = require('../models/Discount');
 const { verifytoken } = require('../middlware/VerifyTokens');
+const {SendNotification} =  require('../socket/socket')
 
 const generateCode = () => {
     return `DISC-${crypto.randomBytes(6).toString('hex').toUpperCase()}`;
@@ -59,6 +60,7 @@ router.post('/redeem',verifytoken, async (req, res) => {
         await newDiscount.save();
         
         student.Discount_codes.push(newDiscount)
+            await SendNotification(req.user.id, `تم استبدال ${pointsRequired} نقطة مقابل كود خصم ${discountPercentage}`, { pointsAdded: 20 });
         return res.status(200).json({
             message: 'تم استبدال النقاط وإنشاء كود الخصم بنجاح',
             code: newDiscount.code,

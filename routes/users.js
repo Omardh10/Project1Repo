@@ -2,6 +2,7 @@ const express = require('express');
 const { verifytokenandisAdmin, verifytoken, verifytokenandonlyuser, verifytokenandauthorization } = require('../middlware/VerifyTokens');
 const { GetUsers, GetUser, RegisterUser, LoginUser, UpdateUser, DeleteUser, PostImageUser, CheckEmailUser, GoogleLogin } = require('../controller/UserController');
 const { uploadphoto } = require('../middlware/upload');
+const {User} =  require('../models/User')
 const router = express.Router();
 
 // Get All Users 
@@ -12,6 +13,13 @@ router.get('/profile/:id', GetUser)
 
 // Register New User
 router.post('/auth/register', RegisterUser)
+
+router.put("/update-fcm-token", verifytoken, async (req, res) => {
+    await User.findByIdAndUpdate(req.user.id, {
+        $set: { fcmToken: req.body.fcmToken }
+    });
+    res.status(200).json({ message: "FCM Token updated successfully" });
+});
 
 // Login Old User
 router.post('/auth/login', LoginUser)
