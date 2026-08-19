@@ -5,26 +5,23 @@ const { uploadphoto } = require('../middlware/upload');
 const router = express.Router();
 
 // Get All Child Accounts
-router.get('/', GetChildAccounts)
+router.get('/', GetChildAccounts);
 
+
+router.get('/byfather', verifytoken, GetChildAccountsByFather);
 
 // Get Single Child Account
-router.get('/:id', GetChildAccount)
-
-router.get('/byfather',verifytoken, GetChildAccountsByFather)
+router.get('/:id', GetChildAccount);
 
 // Create New Child Account
-router.post('/newchildaccount', verifytoken, CreateChildAccount)
+router.post('/newchildaccount', verifytoken, CreateChildAccount);
 
-router.post('/upload-image-childaccount', verifytoken,uploadphoto.single('image'), PostImageChildAccount)
+router.post('/upload-image-childaccount', verifytoken, uploadphoto.single('image'), PostImageChildAccount);
 
 // Update Child Account
-router.patch('/:id', verifytoken, UpdateChildAccount)
+router.patch('/:id', verifytoken, UpdateChildAccount);
 
 // Delete Child Account
-router.delete('/:id', verifytoken, DeleteChildAccount)
-
-
+router.delete('/:id', verifytoken, DeleteChildAccount);
 
 module.exports = router;
-

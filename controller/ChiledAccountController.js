@@ -42,10 +42,21 @@ const CreateChildAccount = asynchandler(async (req, res) => {
 });
 
 const GetChildAccountsByFather = asynchandler(async (req, res) => {
+
     const parent = await Parent.findOne({ userId: req.user.id });
+    
+
+    if (!parent) {
+        return res.status(404).json({ message: "حساب الأب غير موجود" });
+    }
+
     const childAccounts = await ChiledAccount.find({ parent_id: parent._id }).populate('parent_id');
-    res.status(200).json({ message: "Child accounts retrieved successfully", child_accounts: childAccounts })
-})
+    
+    res.status(200).json({ 
+        message: "Child accounts retrieved successfully", 
+        child_accounts: childAccounts 
+    });
+});
 
 const PostImageChildAccount = asynchandler(async (req, res) => {
 
