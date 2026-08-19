@@ -11,6 +11,9 @@ const { Student } = require('../models/Student')
 const { Admin } = require('../models/Admin')
 const {Discount} =  require('../models/Discount')
 const { validatecreateteacher, validateupdateteacher, Teacher } = require("../models/Teacher");
+const { ChiledAccount } = require("../models/ChiledAccount");
+const { Parent } = require("../models/Parent");
+
 
 const CreateCourse = asynchandler(async (req, res) => {
 
@@ -458,7 +461,7 @@ const addCommentTolesson = asynchandler(async (req, res) => {
 });
 
 const PurchaseCourse = asynchandler(async (req, res) => {
-    const purchaserId = req.user.id || req.user._id;
+    const purchaserId = req.user.id || req.user._id; // User ID from token
     const purchaserRole = req.user.role;
     const courseId = req.params.courseId;
 
@@ -485,11 +488,9 @@ const PurchaseCourse = asynchandler(async (req, res) => {
         finalPrice = course.price - discountAmount;
     }
 
-
     const platformFeePercentage = 0.20;
     const platformFee = finalPrice * platformFeePercentage;
     const teacherEarnings = finalPrice - platformFee;
-
     if (purchaserRole === 'parent') {
         const { child_id } = req.body; 
 
@@ -497,28 +498,28 @@ const PurchaseCourse = asynchandler(async (req, res) => {
             return res.status(400).json({ message: "يجب إرسال معرف الابن (child_id)" });
         }
 
-        const childAccount = await ChiledAccount.findOne({ _id: child_id, parent_id: purchaserId });
+        const parent = await Parent.findOne({ userId: purchaserId }) || await Parent.findById(purchaserId);
+        if (!parent) {
+            return res.status(404).json({ message: "حساب الأب غير موجود" });
+        }
+        const childAccount = await ChiledAccount.findOne({ _id: child_id, parent_id: parent._id })||await ChiledAccount.findById(child_id);
         if (!childAccount) {
             return res.status(403).json({ message: "حساب هذا الطفل غير مسجل لديك" });
         }
-
         if (childAccount.courses.includes(courseId)) {
             return res.status(400).json({ message: "هذا الطفل يمتلك الكورس مسبقاً" });
         }
 
-        const parent = await Parent.findOne({ userId: purchaserId }) || await Parent.findById(purchaserId);
-        if (!parent || parent.money_balance < finalPrice) {
+        if (parent.money_balance < finalPrice) {
             return res.status(400).json({ message: "رصيدك غير كافي لشراء هذا الكورس" });
         }
-
-       
         parent.money_balance -= finalPrice;
         await parent.save();
 
-     
         childAccount.courses.push(course._id);
         await childAccount.save();
 
+        
         const transaction = await Transaction.create({
             parent_id: parent._id,
             child_id: childAccount._id,
@@ -529,6 +530,7 @@ const PurchaseCourse = asynchandler(async (req, res) => {
             payment_status: 'completed'
         });
 
+      
         const enrollment = await Enrollment.create({
             child_id: childAccount._id, 
             userId: purchaserId,
@@ -540,6 +542,7 @@ const PurchaseCourse = asynchandler(async (req, res) => {
             certificate_issued: false
         });
 
+   
         teacher.total_student++;
         await teacher.save();
 
@@ -551,6 +554,7 @@ const PurchaseCourse = asynchandler(async (req, res) => {
             transactionId: transaction._id,
             enrollmentData: enrollment
         });
+
     } else if (purchaserRole === 'student') {
         
         const student = await Student.findOne({ userId: purchaserId });
@@ -566,6 +570,7 @@ const PurchaseCourse = asynchandler(async (req, res) => {
         if (student.money_balance < finalPrice) {
             return res.status(400).json({ message: "رصيدك غير كافي لشراء هذا الكورس" });
         }
+
         student.money_balance -= finalPrice;
         student.enrolled_courses_count++;
         await student.save();

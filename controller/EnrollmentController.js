@@ -201,12 +201,10 @@ const CompleteLesson = asynchandler(async (req, res) => {
     const studentId = student._id;
     const userId = req.user.id;
     const { courseId, lessonId } = req.body; 
-
     const course = await Course.findById(courseId);
     if (!course) {
         return res.status(404).json({ message: "Course not found" });
     }
-  
     const totalLessons = course.lessons.length; 
     if (totalLessons === 0) {
         return res.status(400).json({ message: "This course has no lessons yet" });
@@ -215,14 +213,12 @@ const CompleteLesson = asynchandler(async (req, res) => {
     if (!currentEnrollment) {
         return res.status(404).json({ message: "You are not enrolled in this course" });
     }
-    
     const isLessonAlreadyCompleted = currentEnrollment.completed_lessons.includes(lessonId);
     let enrollment = await Enrollment.findOneAndUpdate(
         { student_id: studentId, course_id: courseId },
         { $addToSet: { completed_lessons: lessonId } },
         { new: true }
     );
-
     const completedCount = enrollment.completed_lessons.length; 
     const progress = Math.round((completedCount / totalLessons) * 100);
     let status = 'in_progress';
@@ -236,7 +232,6 @@ const CompleteLesson = asynchandler(async (req, res) => {
             message = "Congratulations! You completed all lessons in the course.";
             await SendNotification(userId, "عمل رائع! لقد أنهيت جميع دروس الكورس وحصلت على 20 نقطة إضافية 🎉", { pointsAdded: 20, type: 'course_points' });
         }
-        
         await student.save(); 
     } else if (progress === 100) {
         status = 'completed';
