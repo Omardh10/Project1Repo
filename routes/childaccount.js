@@ -1,6 +1,7 @@
 const express = require('express');
 const { GetChildAccounts, GetChildAccount,CreateChildAccount, UpdateChildAccount, DeleteChildAccount, GetChildAccountsByFather, PostImageChildAccount } = require('../controller/ChiledAccountController');
 const { verifytoken } = require('../middlware/VerifyTokens');
+const { uploadphoto } = require('../middlware/upload');
 const router = express.Router();
 
 // Get All Child Accounts
@@ -15,7 +16,7 @@ router.get('/byfather',verifytoken, GetChildAccountsByFather)
 // Create New Child Account
 router.post('/newchildaccount', verifytoken, CreateChildAccount)
 
-router.post('/upload-image-childaccount', verifytoken, PostImageChildAccount)
+router.post('/upload-image-childaccount', verifytoken,uploadphoto.single('image'), PostImageChildAccount)
 
 // Update Child Account
 router.patch('/:id', verifytoken, UpdateChildAccount)
