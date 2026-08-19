@@ -636,15 +636,11 @@ const GetChildPurchasedCourses = asynchandler(async (req, res) => {
 });
 
 const CourseForTeacher = asynchandler(async (req, res) => {
-    const student = await Student.findOne({ userId: req.user.id });
-    if (!student) {
-        return res.status(404).json({ message: "Student not found" });
-    }
-    const teacher = await Teacher.findOne(req.params.teacherId);
+    const teacher = await Teacher.findById(req.params.teacherId);
     if (!teacher) {
         return res.status(404).json({ message: "Teacher not found" });
     }
-    let courses = await Course.find({ teacher_id: teacher._id }).populate('category').populate('userId');
+    let courses = await Course.find({ teacher_id: teacher.id }).populate('category').populate('userId');
     res.status(200).json({ status: "success", courses });
 });
 

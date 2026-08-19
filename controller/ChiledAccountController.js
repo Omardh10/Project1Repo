@@ -3,9 +3,9 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
-const {ChiledAccount} =  require('../models/ChiledAccount')
+const { ChiledAccount } = require('../models/ChiledAccount')
 const { validatecreatechildaccount, validateupdatechildaccount } = require("../models/ChiledAccount");
-
+const { Parent } = require('../models/Parent')
 const CreateChildAccount = asynchandler(async (req, res) => {
 
     const parent_id = req.user.id || req.user._id;
@@ -22,20 +22,47 @@ const CreateChildAccount = asynchandler(async (req, res) => {
             name,
             parent_id,
             age,
-            courses: [] 
+            courses: []
         });
         await childAccount.save();
-        
-        return res.status(201).json({ 
+
+        return res.status(201).json({
             status: "success",
-            message: "تم إنشاء حساب الطفل بنجاح", 
-            new_child_account: childAccount 
+            message: "تم إنشاء حساب الطفل بنجاح",
+            new_child_account: childAccount
         });
     } else {
         return res.status(403).json({ message: "فقط الآباء يمكنهم إنشاء حسابات للأبناء" });
     }
 });
 
+const GetChildAccountsByFather = asynchandler(async (req, res) => {
+    const parent = await Parent.findOne({ userId: req.user.id });
+    const childAccounts = await ChiledAccount.find({ parent_id: parent._id }).populate('parent_id');
+    res.status(200).json({ message: "Child accounts retrieved successfully", child_accounts: childAccounts })
+})
+
+const PostImageChildAccount = asynchandler(async (req, res) => {
+
+    if (!req.file) {
+        return res.status(404).json({ message: "no image provided" })
+    }
+    const pathimg = await path.join(__dirname, `../images/${req.file.filename}`)
+    const result = await UploadFile(pathimg);
+    const parent = await Parent.findOne({ userId: req.user.id });
+    const child = await ChiledAccount.findOne({ parent_id: parent._id });
+    if (child.profilephoto.publicId !== null) {
+        await RemoveImage(child.profilephoto.publicId);
+    }
+    child.profilephoto = {
+        url: result.secure_url,
+        publicId: result.public_id
+    }
+    await child.save();
+
+    return res.status(201).json({ message: "image uploaded seccussfully", profilephoto: { url: result.secure_url, publicId: result.public_id } });
+    fs.unlinkSync(pathimg);
+})
 
 const GetChildAccounts = asynchandler(async (req, res) => {
     const childAccounts = await ChiledAccount.find().populate('parent_id');
