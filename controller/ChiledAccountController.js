@@ -117,5 +117,7 @@ module.exports = {
     GetChildAccounts,
     UpdateChildAccount,
     GetChildAccount,
-    DeleteChildAccount
+    DeleteChildAccount,
+    GetChildAccountsByFather,
+    PostImageChildAccount
 }
