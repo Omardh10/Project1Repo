@@ -12,16 +12,7 @@ const DiscountSchema = new mongoose.Schema({
 },{timestamps:true});
 const Discount = mongoose.model('Discount', DiscountSchema);
 
-const validatecreateDiscount = (obj) => {
-    const schema = joi.object({
-        code: joi.string().required(),
-        discount_precentage: joi.number().required()
-    })
-    return schema.validate(obj)
-}
-
 
 module.exports = {
     Discount,
-    validatecreateDiscount,
 };

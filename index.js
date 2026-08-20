@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const http = require("http");
-const { Server } = require("socket.io");
+// تم حذف استيراد Server من socket.io لمنع التكرار
 const { ConnectToDb } = require("./utils/db");
 const userroute = require("./routes/users");
 const courseroute = require('./routes/courses');
@@ -11,28 +11,31 @@ const examroute = require('./routes/exams');
 const parentroute = require('./routes/parents');
 const quastionroute = require('./routes/quastions');
 const reportroute = require('./routes/reports');
-const childaccount = require('./routes/childaccount')
+const childaccount = require('./routes/childaccount');
 const reviewsroute = require('./routes/reviews');
 const studenntroute = require('./routes/students');
 const teacherroute = require('./routes/teachers');
 const transctionroute = require('./routes/transctions');
 const stdanswerroute = require('./routes/stdanswer');
 const modelcourseroute = require('./routes/modelcourses');
-const admin = require('./routes/admin')
+const admin = require('./routes/admin');
 const childaccroute = require('./routes/childaccount');
-const {routerOtp} = require('./routes/otp')
-const discount = require('./routes/discount')
-// const quastionroute = require('./routes/quastions')
+const { routerOtp } = require('./routes/otp');
+const discount = require('./routes/discount');
+
 require("dotenv").config();
+
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+
 app.use(express.json());
 app.use(cors());
 
 ConnectToDb();
 
-
+// تهيئة Socket.io مرة واحدة فقط عبر الملف المستقل
+const { initSocket } = require('./socket/socket');
+initSocket(server);
 
 app.use('/api/users', userroute)
 app.use('/api/admin', admin)
@@ -61,11 +64,9 @@ app.use((req, res, next) => {
 
 // 2. معالج الأخطاء العام (Global Error Handler)
 app.use((error, req, res, next) => {
-    // التحقق مما إذا كانت الاستجابة قد أُرسلت بالفعل للعميل
     if (res.headersSent) {
         return next(error);
     }
-
     const statusCode = error.status || 500;
     res.status(statusCode).json({ message: error.message });
 });

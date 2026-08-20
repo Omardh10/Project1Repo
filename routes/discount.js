@@ -5,21 +5,39 @@ const asynchandler = require("express-async-handler");
 const {Student} = require('../models/Student');
 const { Discount} = require('../models/Discount');
 const { verifytoken } = require('../middlware/VerifyTokens');
+const {SendNotification} =  require('../socket/socket')
 
 const generateCode = () => {
     return `DISC-${crypto.randomBytes(6).toString('hex').toUpperCase()}`;
 };
 
+router.get('/check-code/:code',async (req,res)=>{
+    const codee = await Discount.findOne({code:req.params.code})
+    if(!codee){
+        return res.status(404).json({message: "code not found"})
+    }
+    return res.status(200).json({message:"code founded",precentege:codee.discount_precentage})
+})
 // POST /api/redeem
 router.post('/redeem',verifytoken, async (req, res) => {
     try {
-        const {  discountPercentage, pointsRequired } = req.body;
+        const { pointsRequired } = req.body;
+        let discountPercentage= 0;
 
         
-        if ( !discountPercentage || !pointsRequired) {
+        if ( !pointsRequired) {
             return res.status(400).json({ message: 'جميع البيانات مطلوبة' });
         }
-
+       if(pointsRequired == 50){
+        discountPercentage=10
+       }else if(pointsRequired==75){
+        discountPercentage=15
+       }else if(pointsRequired == 25){
+        discountPercentage=5
+       }
+       else if(pointsRequired == 100){
+         discountPercentage=20
+       }
 
         const student = await Student.findOne({userId: req.user.id});
         if (!student) {
@@ -37,15 +55,16 @@ router.post('/redeem',verifytoken, async (req, res) => {
 
         const newDiscount = new Discount({
             code: generateCode(),
-            discount_percentage: discountPercentage
+            discount_precentage: discountPercentage
         });
         await newDiscount.save();
         
         student.Discount_codes.push(newDiscount)
-        return res.status(201).json({
+            await SendNotification(req.user.id, `تم استبدال ${pointsRequired} نقطة مقابل كود خصم ${discountPercentage}`, { pointsAdded: 20 });
+        return res.status(200).json({
             message: 'تم استبدال النقاط وإنشاء كود الخصم بنجاح',
             code: newDiscount.code,
-            discount_percentage: newDiscount.discount_percentage,
+            discount_percentage: discountPercentage,
             remaining_points: student.points_balance
         });
 

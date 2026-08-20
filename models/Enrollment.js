@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const joi = require('joi');
+
 const EnrollmentSchema = new mongoose.Schema({
     student_id: {
         type: mongoose.Schema.Types.ObjectId,
@@ -53,26 +54,36 @@ const validatecreateenrollment = (obj) => {
         student_id: joi.string().required(),
         course_id: joi.string().required(),
         progress: joi.number().default(0),
-        completion_status: joi.string().valid('not started', 'in progress', 'completed').default('not started'),
+        completion_status: joi.string().valid('not started', 'in_progress', 'completed').default('not started'),
         certificate_issued: joi.boolean().default(false),
         completed_lessons: joi.array().items(joi.string())
-    })
-    return schema.validate(obj)
-}
+    });
+    return schema.validate(obj);
+};
 
 const validateupdateenrollment = (obj) => {
     const schema = joi.object({
         student_id: joi.string(),
         course_id: joi.string(),
         progress: joi.number().default(0),
-        completion_status: joi.string().valid('not started', 'in progress', 'completed').default('not started'),
+        completion_status: joi.string().valid('not started', 'in_progress', 'completed').default('not started'),
         certificate_issued: joi.boolean().default(false)
-    })
-    return schema.validate(obj)
-}
+    });
+    return schema.validate(obj);
+};
+
+// 💡 إضافة دالة التحقق الخاصة بمسار complete-lesson للسماح بـ courseId و lessonId
+const validatecompletelesson = (obj) => {
+    const schema = joi.object({
+        courseId: joi.string().required(),
+        lessonId: joi.string().required()
+    });
+    return schema.validate(obj);
+};
 
 module.exports = {
     Enrollment,
     validatecreateenrollment,
-    validateupdateenrollment
+    validateupdateenrollment,
+    validatecompletelesson
 };
