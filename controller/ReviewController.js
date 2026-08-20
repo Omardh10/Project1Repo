@@ -5,6 +5,8 @@ const fs = require('fs');
 const path = require('path');
 const { validatecreatereview, validateupdatereview } = require("../models/Review");
 const { SendNotification } = require("../socket/socket");
+const {Student} = require('../models/Student')
+const {Review} =require('../models/Review')
 
 
 const CreateReview = asynchandler(async (req, res) => {

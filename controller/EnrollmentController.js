@@ -234,6 +234,7 @@ const CompleteLesson = asynchandler(async (req, res) => {
         }
         await student.save();
     } else if (progress === 100) {
+        enrollment.certificate_issued = true;
         status = 'completed';
     }
 

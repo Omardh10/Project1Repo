@@ -1,7 +1,6 @@
 const { Server } = require("socket.io");
 const Notification = require('../models/Notifications'); // تأكد من صحة المسار
 const {User} = require('../models/User'); 
-const admin = require('../config/firebase'); 
 
 let io;
 const users = {};
@@ -47,48 +46,6 @@ const SendNotification = async (userId, message, data = {}) => {
                 timestamp: savedNotify.createdAt
             });
             console.log(`Socket Notification sent to: ${userId}`);
-        }
-
-        // 3. الإرسال عبر Firebase FCM (Push Notification)
-        const user = await User.findById(userId);
-        if (user && user.fcmToken) {
-            // تجهيز الـ data وتحويل جميع القيم إلى Strings
-            const stringifiedData = {
-                notificationId: String(savedNotify._id || savedNotify.id),
-                click_action: 'FLUTTER_NOTIFICATION_CLICK'
-            };
-
-            if (data && typeof data === 'object') {
-                Object.keys(data).forEach(key => {
-                    stringifiedData[key] = typeof data[key] === 'object' 
-                        ? JSON.stringify(data[key]) 
-                        : String(data[key]);
-                });
-            }
-
-            const fcmPayload = {
-                token: user.fcmToken,
-                notification: {
-                    title: 'تطبيق أُفُق',
-                    body: message
-                },
-                data: stringifiedData
-            };
-
-            try {
-                await admin.messaging().send(fcmPayload);
-                console.log(`FCM Push Notification sent to token: ${user.fcmToken}`);
-            } catch (fcmError) {
-                console.error("FCM Send Error:", fcmError.message);
-                // إذا كان التوكن منتهياً أو غير صالح، قم بحذفه من قاعدة البيانات
-                if (
-                    fcmError.code === 'messaging/invalid-registration-token' ||
-                    fcmError.code === 'messaging/registration-token-not-registered'
-                ) {
-                    await User.findByIdAndUpdate(userId, { $unset: { fcmToken: 1 } });
-                    console.log(`Removed invalid FCM token for user: ${userId}`);
-                }
-            }
         }
 
     } catch (error) {
