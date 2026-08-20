@@ -3,6 +3,7 @@ const { GetCourseViewLogs, GetCourseViewLog, CreateCourseViewLog, UpdateCourseVi
 const { DeleteEnrollment, UpdateEnrollment, CreateEnrollment,GetEnrollmentsTeacher, GetEnrollment, GetEnrollments } = require('../controller/EnrollmentController');
 const router = express.Router();
 const { verifytoken, verifytokenandisAdmin } = require('../middlware/VerifyTokens');
+const { CheckCertificate } = require('../controller/EnrollmentController');
 
 // Get All Enrollments
 router.get('/', verifytoken, GetEnrollments)
@@ -21,7 +22,8 @@ router.patch('/:id', verifytoken, UpdateEnrollment)
 // Delete Enrollment
 router.delete('/:id', verifytoken, DeleteEnrollment)
 
-
+// Check Certificate
+router.get('/check-certificate/:courseId', verifytoken, CheckCertificate);
 
 
 module.exports = router;

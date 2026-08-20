@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { validatecreateenrollment, validateupdateenrollment, Enrollment } = require("../models/Enrollment");
 const { Course } = require("../models/Course");
-const {Teacher} = require('../models/Teacher')
+const { Teacher } = require('../models/Teacher')
 const { Student } = require("../models/Student");
 const { SendNotification } = require("../socket/socket");
 
@@ -22,7 +22,7 @@ const CreateEnrollment = asynchandler(async (req, res) => {
         certificate_issued: req.body.certificate_issued
     })
     await NewEnrollment.save();
-   return res.status(201).json({ status: "success", enrollment: NewEnrollment });
+    return res.status(201).json({ status: "success", enrollment: NewEnrollment });
 })
 
 
@@ -31,7 +31,7 @@ const GetEnrollment = asynchandler(async (req, res) => {
     if (!enrollment) {
         return res.status(404).json({ message: "Enrollment not found" });
     }
-   return  res.status(200).json({ status: "success", enrollment });
+    return res.status(200).json({ status: "success", enrollment });
 })
 
 const UpdateEnrollment = asynchandler(async (req, res) => {
@@ -69,11 +69,11 @@ const GetEnrollments = asynchandler(async (req, res) => {
     }
 })
 const GetEnrollmentsTeacher = asynchandler(async (req, res) => {
-    const teacher = await Teacher.findOne({userId: req.user.id})
-    const enrollments = await Enrollment.find({teacher_id: teacher.id }).populate('student_id').populate('userId').populate('course_id')
-   return res.status(200).json({ status: "success", enrollments });
+    const teacher = await Teacher.findOne({ userId: req.user.id })
+    const enrollments = await Enrollment.find({ teacher_id: teacher.id }).populate('student_id').populate('userId').populate('course_id')
+    return res.status(200).json({ status: "success", enrollments });
     if (req.user.role == "teacher" || req.user.role == "admin") {
-       return res.status(200).json({ status: "success", enrollments });
+        return res.status(200).json({ status: "success", enrollments });
     } else {
         return res.status(403).json({ message: "Unauthorized Do it" });
     }
@@ -111,14 +111,14 @@ const getStudentOfTeacher = asynchandler(async (req, res) => {
             $group: {
                 _id: "$userId",
                 student_id: { $first: "$student_id" },
-                totalEnrolledCourses: { $sum: 1 }, 
+                totalEnrolledCourses: { $sum: 1 },
                 firstEnrolledAt: { $min: "$createdAt" }
             }
         },
 
         {
             $lookup: {
-                from: "users", 
+                from: "users",
                 localField: "_id",
                 foreignField: "_id",
                 as: "userData"
@@ -134,15 +134,15 @@ const getStudentOfTeacher = asynchandler(async (req, res) => {
                 as: "studentData"
             }
         },
-        { 
-            $unwind: { 
-                path: "$studentData", 
-                preserveNullAndEmptyArrays: true 
-            } 
+        {
+            $unwind: {
+                path: "$studentData",
+                preserveNullAndEmptyArrays: true
+            }
         }
     ];
 
-   
+
     if (search.trim() !== "") {
         pipeline.push({
             $match: {
@@ -200,12 +200,12 @@ const CompleteLesson = asynchandler(async (req, res) => {
     const student = await Student.findOne({ userId: req.user.id });
     const studentId = student._id;
     const userId = req.user.id;
-    const { courseId, lessonId } = req.body; 
+    const { courseId, lessonId } = req.body;
     const course = await Course.findById(courseId);
     if (!course) {
         return res.status(404).json({ message: "Course not found" });
     }
-    const totalLessons = course.lessons.length; 
+    const totalLessons = course.lessons.length;
     if (totalLessons === 0) {
         return res.status(400).json({ message: "This course has no lessons yet" });
     }
@@ -219,7 +219,7 @@ const CompleteLesson = asynchandler(async (req, res) => {
         { $addToSet: { completed_lessons: lessonId } },
         { new: true }
     );
-    const completedCount = enrollment.completed_lessons.length; 
+    const completedCount = enrollment.completed_lessons.length;
     const progress = Math.round((completedCount / totalLessons) * 100);
     let status = 'in_progress';
     let message = "Progress updated";
@@ -227,17 +227,17 @@ const CompleteLesson = asynchandler(async (req, res) => {
         student.points_balance += 2;
         await SendNotification(userId, "مبروك! حصلت على نقطتين لإنهائك درساً جديداً 🌟", { pointsAdded: 2, type: 'lesson_points' });
         if (progress === 100) {
-            status = 'completed'; 
+            status = 'completed';
             student.points_balance += 20;
             message = "Congratulations! You completed all lessons in the course.";
             await SendNotification(userId, "عمل رائع! لقد أنهيت جميع دروس الكورس وحصلت على 20 نقطة إضافية 🎉", { pointsAdded: 20, type: 'course_points' });
         }
-        await student.save(); 
+        await student.save();
     } else if (progress === 100) {
         status = 'completed';
     }
 
-    enrollment.progress_percentage = progress;
+    enrollment.progress = progress;
     enrollment.completion_status = status;
     await enrollment.save();
 
@@ -250,6 +250,46 @@ const CompleteLesson = asynchandler(async (req, res) => {
     });
 });
 
+
+const CheckCertificate = asynchandler(async (req, res) => {
+
+    const student = await Student.findOne({ userId: req.user.id });
+    if (!student) {
+        return res.status(404).json({ message: "حساب الطالب غير موجود" });
+    }
+    const courseId = req.params.courseId;
+    const enrollment = await Enrollment.findOne({
+        student_id: student._id,
+        course_id: courseId
+    }).populate('course_id');
+
+    if (!enrollment) {
+        return res.status(404).json({ message: "أنت غير مسجل في هذا الكورس" });
+    }
+
+    const isCompleted = enrollment.completion_status === 'completed' ||
+        enrollment.progress === 100;
+    if (isCompleted) {
+        if (!enrollment.certificate_issued) {
+            enrollment.certificate_issued = true;
+            await enrollment.save();
+        }
+        return res.status(200).json({
+            status: "success",
+            certificate: true,
+            student_name: student.name,
+            course: enrollment.course_id
+        });
+    } else {
+        return res.status(200).json({
+            status: "success",
+            certificate: false,
+            student_name: student.name,
+            course: enrollment.course_id
+        });
+    }
+});
+
 module.exports = {
     CreateEnrollment,
     GetEnrollment,
@@ -258,5 +298,6 @@ module.exports = {
     DeleteEnrollment,
     CompleteLesson,
     GetEnrollmentsTeacher,
-    getStudentOfTeacher
+    getStudentOfTeacher,
+    CheckCertificate
 }
