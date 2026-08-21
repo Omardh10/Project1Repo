@@ -1,5 +1,5 @@
 const express = require('express');
-const { GetCourses, GetCourse, CreateCourse, setvip, getFundCourses, UpdateCourse, GetMyCourses, getCoursesAtCatogaries, addCommentTolesson, DeleteCourse, PostImageCourse, PurchaseCourse, PostCourseFiles, FilterCourses, SubmitLessonQuiz, CourseForTeacher, GetChildPurchasedCourses } = require('../controller/CourseController');
+const { GetCourses, GetCourse, CreateCourse, setvip, getFundCourses,downloadCertificate, UpdateCourse, GetMyCourses, getCoursesAtCatogaries, addCommentTolesson, DeleteCourse, PostImageCourse, PurchaseCourse, PostCourseFiles, FilterCourses, SubmitLessonQuiz, CourseForTeacher, GetChildPurchasedCourses } = require('../controller/CourseController');
 const router = express.Router();
 const { verifytoken, verifytokenandisAdmin } = require('../middlware/VerifyTokens');
 const { CompleteLesson } = require('../controller/EnrollmentController');
@@ -8,9 +8,6 @@ const { Enrollment } = require('../models/Enrollment');
 const { validatecompletelesson } = require('../models/Enrollment');
 const multer = require('multer');
 
-// ==========================================
-// 1. المسارات المخصصة والثابتة (Static Routes)
-// ==========================================
 
 router.get('/popular', async (req, res) => {
     try {
@@ -92,15 +89,13 @@ router.post(
     PostCourseFiles
 );
 
-// ✅ تم نقل هذا المسار هنا لتفادي التعارض مع PATCH /:id
 router.patch('/complete-lesson', verifytoken, CompleteLesson);
 
 
-// ==========================================
-// 2. المسارات الديناميكية المتغيرة (Dynamic Routes - ID)
-// ==========================================
 
 router.get('/:id', verifytoken, GetCourse);
+
+router.get('/:courseId/certificate',verifytoken, downloadCertificate);
 
 // Update Course
 router.patch('/:id', verifytoken, UpdateCourse);

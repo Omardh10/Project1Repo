@@ -9,10 +9,12 @@ const { Enrollment } = require("../models/Enrollment");
 const { Transaction } = require("../models/Transaction");
 const { Student } = require('../models/Student')
 const { Admin } = require('../models/Admin')
-const {Discount} =  require('../models/Discount')
+const { Discount } = require('../models/Discount')
+const puppeteer = require('puppeteer');
 const { validatecreateteacher, validateupdateteacher, Teacher } = require("../models/Teacher");
 const { ChiledAccount } = require("../models/ChiledAccount");
 const { Parent } = require("../models/Parent");
+const {User}  =require('../models/User')
 
 
 const CreateCourse = asynchandler(async (req, res) => {
@@ -93,9 +95,7 @@ const PostCourseFiles = asynchandler(async (req, res) => {
             } : undefined
         };
 
-        // 4. حفظ الدرس في قاعدة البيانات
-        // عند استدعاء course.save()، سيعمل الـ pre('save') hook تلقائياً
-        // ليحسب مجموع أوقات كل الدروس ويخزنه في course.duration
+
         course.lessons.push(newLesson);
         await course.save();
 
@@ -461,7 +461,7 @@ const addCommentTolesson = asynchandler(async (req, res) => {
 });
 
 const PurchaseCourse = asynchandler(async (req, res) => {
-    const purchaserId = req.user.id || req.user._id; // User ID from token
+    const purchaserId = req.user.id || req.user._id;
     const purchaserRole = req.user.role;
     const courseId = req.params.courseId;
 
@@ -478,21 +478,25 @@ const PurchaseCourse = asynchandler(async (req, res) => {
     let finalPrice = course.price;
     let discountAmount = 0;
     const { discount_code } = req.body;
+    let code_for_delete = "";
 
     if (discount_code) {
         const discount = await Discount.findOne({ code: discount_code });
-        if (!discount) {
+        if (discount) {
+            discountAmount = (course.price * discount.discount_precentage) / 100;
+            finalPrice = course.price - discountAmount;
+            code_for_delete = discount_code;
+        } else {
             return res.status(404).json({ message: "كود الخصم غير صحيح أو غير موجود" });
         }
-        discountAmount = (course.price * discount.discount_precentage) / 100;
-        finalPrice = course.price - discountAmount;
     }
 
     const platformFeePercentage = 0.20;
     const platformFee = finalPrice * platformFeePercentage;
     const teacherEarnings = finalPrice - platformFee;
+
     if (purchaserRole === 'parent') {
-        const { child_id } = req.body; 
+        const { child_id } = req.body;
 
         if (!child_id) {
             return res.status(400).json({ message: "يجب إرسال معرف الابن (child_id)" });
@@ -502,7 +506,7 @@ const PurchaseCourse = asynchandler(async (req, res) => {
         if (!parent) {
             return res.status(404).json({ message: "حساب الأب غير موجود" });
         }
-        const childAccount = await ChiledAccount.findOne({ _id: child_id, parent_id: parent._id })||await ChiledAccount.findById(child_id);
+        const childAccount = await ChiledAccount.findOne({ _id: child_id, parent_id: parent._id }) || await ChiledAccount.findById(child_id);
         if (!childAccount) {
             return res.status(403).json({ message: "حساب هذا الطفل غير مسجل لديك" });
         }
@@ -519,20 +523,18 @@ const PurchaseCourse = asynchandler(async (req, res) => {
         childAccount.courses.push(course._id);
         await childAccount.save();
 
-        
         const transaction = await Transaction.create({
             parent_id: parent._id,
             child_id: childAccount._id,
             course_id: course._id,
-            amount: finalPrice,    
+            amount: finalPrice,
             platform_fee: platformFee,
             instructor_earnings: teacherEarnings,
             payment_status: 'completed'
         });
 
-      
         const enrollment = await Enrollment.create({
-            child_id: childAccount._id, 
+            child_id: childAccount._id,
             userId: purchaserId,
             teacher_id: course.teacher_id,
             course_id: course._id,
@@ -542,22 +544,24 @@ const PurchaseCourse = asynchandler(async (req, res) => {
             certificate_issued: false
         });
 
-   
         teacher.total_student++;
         await teacher.save();
 
-        return res.status(201).json({ 
-            status: "success", 
-            message: discountAmount > 0 
-                ? `تم شراء الكورس للابن مع الخصم! تم توفير ${discountAmount}` 
-                : "تم شراء الكورس للابن بنجاح", 
+        if (code_for_delete !== "") {
+            await Discount.findOneAndDelete({ code: discount_code });
+        }
+
+        return res.status(201).json({
+            status: "success",
+            message: discountAmount > 0
+                ? `تم شراء الكورس للابن مع الخصم! تم توفير ${discountAmount}`
+                : "تم شراء الكورس للابن بنجاح",
             transactionId: transaction._id,
             enrollmentData: enrollment
         });
-        
 
     } else if (purchaserRole === 'student') {
-        
+
         const student = await Student.findOne({ userId: purchaserId });
         if (!student) {
             return res.status(404).json({ message: "Student profile not found" });
@@ -579,7 +583,7 @@ const PurchaseCourse = asynchandler(async (req, res) => {
         const transaction = await Transaction.create({
             student_id: student._id,
             course_id: course._id,
-            amount: finalPrice, 
+            amount: finalPrice,
             platform_fee: platformFee,
             instructor_earnings: teacherEarnings,
             payment_status: 'completed'
@@ -599,10 +603,18 @@ const PurchaseCourse = asynchandler(async (req, res) => {
         teacher.total_student++;
         await teacher.save();
 
+        if (code_for_delete !== "") {
+            try {
+                await Discount.findOneAndDelete({ code: discount_code });
+            } catch (error) {
+                console.error("خطأ في حذف كود الخصم:", error);
+            }
+        }
+
         return res.status(201).json({
             status: "success",
-            message: discountAmount > 0 
-                ? `تم تطبيق الخصم بنجاح! تم خصم ${discountAmount} من السعر.` 
+            message: discountAmount > 0
+                ? `تم تطبيق الخصم بنجاح! تم خصم ${discountAmount} من السعر.`
                 : "تم شراء الكورس بنجاح",
             transactionId: transaction._id,
             enrollmentData: enrollment
@@ -615,7 +627,7 @@ const PurchaseCourse = asynchandler(async (req, res) => {
 
 const GetChildPurchasedCourses = asynchandler(async (req, res) => {
     const parentId = await Parent.findOne({ userId: req.user.id });
-    const childId = req.params.childId; 
+    const childId = req.params.childId;
     if (req.user.role !== 'parent') {
         return res.status(403).json({ message: "فقط الآباء يمكنهم عرض كورسات أبنائهم" });
     }
@@ -629,7 +641,7 @@ const GetChildPurchasedCourses = asynchandler(async (req, res) => {
     const enrollments = await Enrollment.find({ student_id: childId })
         .populate({
             path: 'course_id',
-            select: 'title description image price teacher_id' 
+            select: 'title description image price teacher_id'
         });
     if (!enrollments || enrollments.length === 0) {
         return res.status(404).json({ message: "لا يوجد كورسات مشتراة لهذا الابن حتى الآن" });
@@ -653,7 +665,7 @@ const CourseForTeacher = asynchandler(async (req, res) => {
 const SubmitLessonQuiz = asynchandler(async (req, res) => {
 
     const { student_id, course_id, lesson_id, answers } = req.body;
-    
+
     const student = await Student.findById(student_id);
     if (!student) {
         return res.status(404).json({ message: "Student not found" });
@@ -677,17 +689,17 @@ const SubmitLessonQuiz = asynchandler(async (req, res) => {
     let pointsEarned = 0;
     for (const item of answers) {
         const question = lesson.quiz.questions.id(item.question_id);
-        
+
         if (question && question.correct_answer === item.selected_option) {
             correctCount++;
-            pointsEarned += 2; 
+            pointsEarned += 2;
         }
     }
 
     if (pointsEarned > 0) {
         student.points_balance = (student.points_balance || 0) + pointsEarned;
         await student.save();
-        
+
     }
 
     res.status(200).json({
@@ -698,11 +710,282 @@ const SubmitLessonQuiz = asynchandler(async (req, res) => {
             points_earned: pointsEarned,
             total_points: student.points_balance
         },
-        message: pointsEarned > 0 
-            ? `Congratulations! You answered ${correctCount} questions correctly and earned ${pointsEarned} points.` 
+        message: pointsEarned > 0
+            ? `Congratulations! You answered ${correctCount} questions correctly and earned ${pointsEarned} points.`
             : "No points earned. Better luck next time!"
     });
 });
+
+
+
+
+const downloadCertificate = async (req, res) => {
+    let browser = null;
+    let {courseId}=req.params
+    try {
+      
+        const student = await Student.findOne({ userId: req.user.id });
+        const course = await Course.findById(courseId);
+        const enrollment = await Enrollment.findOne({ course_id: courseId, student_id: student.id })
+        if (enrollment.completion_status != 'completed') {
+            return res.status(403).json({ message: "لا يمكنك الحصول على الشهادة" })
+        }
+       const user = await User.findById(req.user.id)
+        const studentName = user.fullname
+        const courseName = course.title;
+        const issueDate = new Date().toLocaleDateString('ar-EG', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        const directorName = "ادارة منصة افق";
+
+        // 2. تصميم قالب HTML للشهادة
+        const htmlContent = `
+        <!DOCTYPE html>
+        <html lang="ar" dir="rtl">
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Playfair+Display:wght@700&display=swap');
+
+            @page {
+              size: A4 landscape;
+              margin: 0;
+            }
+
+            * {
+              box-sizing: border-box;
+              margin: 0;
+              padding: 0;
+            }
+
+            body {
+              font-family: 'Cairo', sans-serif;
+              background-color: #fdfbf7;
+              width: 297mm;
+              height: 210mm;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              padding: 10mm;
+            }
+
+            .certificate-border {
+              width: 100%;
+              height: 100%;
+              border: 4px solid #1a2b4c;
+              padding: 6px;
+              background-color: #ffffff;
+            }
+
+            .certificate-inner {
+              width: 100%;
+              height: 100%;
+              border: 2px solid #d4af37;
+              padding: 30px 40px;
+              text-align: center;
+              display: flex;
+              flex-direction: column;
+              justify-content: space-between;
+              background: radial-gradient(circle at center, #ffffff 60%, #faf8f5 100%);
+            }
+
+            .header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              border-bottom: 2px solid #f0f0f0;
+              padding-bottom: 12px;
+            }
+
+            .brand-name {
+              font-family: 'Playfair Display', serif;
+              font-size: 24px;
+              font-weight: bold;
+              color: #0052FF;
+            }
+
+            .cert-number {
+              font-size: 11px;
+              color: #888888;
+            }
+
+            .cert-title {
+              font-size: 32px;
+              font-weight: 800;
+              color: #1a2b4c;
+            }
+
+            .cert-subtitle {
+              font-size: 14px;
+              color: #d4af37;
+              font-weight: 600;
+              margin-top: 4px;
+            }
+
+            .presented-to {
+              font-size: 14px;
+              color: #666666;
+            }
+
+            .student-name {
+              font-size: 32px;
+              font-weight: 800;
+              color: #0052FF;
+              margin: 10px 0;
+              border-bottom: 2px dashed #d4af37;
+              display: inline-block;
+              padding: 0 20px 4px 20px;
+            }
+
+            .completion-text {
+              font-size: 14px;
+              color: #666666;
+            }
+
+            .course-name {
+              font-size: 22px;
+              font-weight: 700;
+              color: #1a2b4c;
+              margin-top: 6px;
+            }
+
+            .footer {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-end;
+              padding-top: 15px;
+            }
+
+            .seal-badge {
+              width: 60px;
+              height: 60px;
+              border-radius: 50%;
+              background: #d4af37;
+              color: white;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-weight: bold;
+              font-size: 12px;
+              margin: 0 auto;
+            }
+
+            .signature-line {
+              width: 140px;
+              height: 1px;
+              background-color: #888888;
+              margin: 0 auto 6px auto;
+            }
+
+            .sig-title {
+              font-size: 12px;
+              color: #777777;
+            }
+
+            .sig-value {
+              font-size: 14px;
+              font-weight: bold;
+              color: #1a2b4c;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="certificate-border">
+            <div class="certificate-inner">
+              <div class="header">
+                <div class="brand-name">Ofuq ACADEMY</div>
+                <div class="cert-number">Ref: OFQ-${courseId}-${Date.now().toString().slice(-4)}</div>
+              </div>
+
+              <div>
+                <div class="cert-title">شهادة إتمام كورس</div>
+                <div class="cert-subtitle">CERTIFICATE OF COMPLETION</div>
+              </div>
+
+              <div>
+                <div class="presented-to">تُمنح هذه الشهادة بكل فخر إلى الطالب / الطالبة:</div>
+                <div class="student-name">${studentName}</div>
+              </div>
+
+              <div>
+                <div class="completion-text">لإتمامه بنجاح ومتطلبات الدورة التدريبية المعتمدة:</div>
+                <div class="course-name">${courseName}</div>
+              </div>
+
+              <div class="footer">
+                <div style="text-align: right;">
+                  <div class="sig-title">تاريخ الإصدار</div>
+                  <div class="sig-value">${issueDate}</div>
+                </div>
+
+                <div>
+                  <div class="seal-badge">مُعتمد</div>
+                </div>
+
+                <div style="text-align: left;">
+                  <div class="signature-line"></div>
+                  <div class="sig-title">توقيع المدير الأكاديمي</div>
+                  <div class="sig-value">${directorName}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </body>
+        </html>
+        `;
+
+        // 3. تشغيل Puppeteer إعدادات حماية وتدفق صحيحة
+        browser = await puppeteer.launch({
+            headless: 'new',
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--font-render-hinting=none'
+            ]
+        });
+
+        const page = await browser.newPage();
+
+        // تحديد حجم أبعاد الشاشة لضبط عناصر الصفحة
+        await page.setViewport({ width: 1280, height: 800 });
+
+        // تحميل الصفحة والانتظار لحين اكتمال تحميل جميع الخطوط عبر الشبكة
+        await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+
+        // تحويل الصفحة إلى بايتات PDF
+        const pdfBuffer = await page.pdf({
+            format: 'A4',
+            landscape: true,
+            printBackground: true,
+            margin: { top: '0px', right: '0px', bottom: '0px', left: '0px' }
+        });
+
+        await browser.close();
+
+        // 4. ضبط Headers الخاصة بالـ Binary Stream لمنع تلف الملف أثناء الإرسال
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Length', pdfBuffer.length);
+        res.setHeader('Content-Disposition', `attachment; filename=certificate_${courseId}.pdf`);
+
+        // استخدام res.end لإرسال البايتات النقية مباشرة دون تحويلها لنص
+        return res.end(pdfBuffer);
+
+    } catch (error) {
+        if (browser) await browser.close();
+        console.error("خطأ أثناء إنشاء الشهادة:", error);
+
+        return res.status(500).json({ 
+            success: false, 
+            message: "حدث خطأ في السيرفر أثناء إنشاء الشهادة",
+            error: error.message 
+        });
+    }
+};
+
+
 
 
 module.exports = {
@@ -722,5 +1005,6 @@ module.exports = {
     addCommentTolesson,
     SubmitLessonQuiz,
     CourseForTeacher,
-    GetChildPurchasedCourses
+    GetChildPurchasedCourses,
+    downloadCertificate
 };

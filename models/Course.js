@@ -208,7 +208,7 @@ const CourseSchema = new mongoose.Schema({
         quiz: {
             time: {
                 type: Number,
-                required: true,
+                default: 0.5,
             },
             title: {
                 type: String,
