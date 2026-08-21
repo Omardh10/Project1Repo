@@ -14,11 +14,36 @@ const {SendNotification} = require('../socket/socket')
 const router = express.Router();
 
 router.get('/mycourses', verifytoken ,async  (req, res) => {
-  const student = await Student.findOne({userId: req.user.id})
-  const myCourses = await Enrollment.find({student_id: student.id}).populate('course_id')
-return res.status(200).json({message:"success", data: myCourses })
+const student = await Student.findOne({ userId: req.user.id });
+const myEnrollments = await Enrollment.find({ student_id: student.id })
+  .populate({
+    path: 'course_id',
+      populate: {
+         path: 'category',
+        }
+  })
 
+const myCourses = myEnrollments
+  .map(enrollment => {
+    const course = enrollment.course_id;
+    if (!course) return null;
+
+    // إذا تم حذف القسم وأرجع الـ populate قيمة null
+    if (!course.category) {
+      course.category = { name: 'قسم محذوف أو غير محدد' };
+    }
+    return course;
+  })
+  .filter(course => course != null);
+return res.json({myCourses})
 })
+
+router.get('/myenrollments', verifytoken ,async  (req, res) => { 
+const student = await Student.findOne({ userId: req.user.id });
+const myEnrollments = await Enrollment.find({ student_id: student.id }).populate('course_id')
+return res.json({myEnrollments})
+})
+
 
 router.post('/quiz-confirm', verifytoken, async(req,res)=>{
    const {boolQuiz} = req.body
